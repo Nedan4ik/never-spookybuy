@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CompilerConfiguration">
+    <annotationProcessing>
+      <profile name="Gradle Imported" enabled="true">
+        <outputRelativeToContentRoot value="true" />
+        <option name="defaultObfuscationEnv" value="named:intermediary" />
+        <option name="inMapFileNamedIntermediary" value="D:\GradleCache\caches\fabric-loom\1.16.5\net.fabricmc.yarn.1_16_5.1.16.5+build.10-v2\mappings.tiny" />
+        <option name="outMapFileNamedIntermediary" value="D:\IdeaProjects\Never SpookyBuy1\build\loom-cache\mixin-map-net.fabricmc.yarn.1_16_5.1.16.5+build.10-v2.main.tiny" />
+        <option name="outRefMapFile" value="D:\IdeaProjects\Never SpookyBuy1\build\classes\java\main\spookybuy-refmap.json" />
+        <option name="quiet" value="true" />
+        <processorPath useClasspath="false">
+          <entry name="$PROJECT_DIR$/../../GradleCache/caches/modules-2/files-2.1/org.projectlombok/lombok/1.18.30/f195ee86e6c896ea47a1d39defbe20eb59cd149d/lombok-1.18.30.jar" />
+        </processorPath>
+        <module name="Never_SpookyBuy1.main" />
+      </profile>
+      <profile name="Gradle Imported" enabled="true">
+        <outputRelativeToContentRoot value="true" />
+        <option name="defaultObfuscationEnv" value="named:intermediary" />
+        <option name="inMapFileNamedIntermediary" value="D:\GradleCache\caches\fabric-loom\1.16.5\net.fabricmc.yarn.1_16_5.1.16.5+build.10-v2\mappings.tiny" />
+        <option name="outMapFileNamedIntermediary" value="D:\IdeaProjects\Never SpookyBuy\build\loom-cache\mixin-map-net.fabricmc.yarn.1_16_5.1.16.5+build.10-v2.main.tiny" />
+        <option name="outRefMapFile" value="D:\IdeaProjects\Never SpookyBuy\build\classes\java\main\spookybuy-refmap.json" />
+        <option name="quiet" value="true" />
+        <processorPath useClasspath="false">
+          <entry name="$PROJECT_DIR$/../../GradleCache/caches/modules-2/files-2.1/org.projectlombok/lombok/1.18.30/f195ee86e6c896ea47a1d39defbe20eb59cd149d/lombok-1.18.30.jar" />
+        </processorPath>
+        <module name="Never_SpookyBuy.main" />
+      </profile>
+    </annotationProcessing>
+    <bytecodeTargetLevel target="17" />
+  </component>
+  <component name="JavacSettings">
+    <option name="ADDITIONAL_OPTIONS_STRING" value="&quot;-AoutRefMapFile=D:\IdeaProjects\Never SpookyBuy\build\classes\java\main\spookybuy-refmap.json&quot; -AdefaultObfuscationEnv=named:intermediary -Aquiet=true &quot;-AoutMapFileNamedIntermediary=D:\IdeaProjects\Never SpookyBuy\build\loom-cache\mixin-map-net.fabricmc.yarn.1_16_5.1.16.5+build.10-v2.main.tiny&quot; -AinMapFileNamedIntermediary=D:\GradleCache\caches\fabric-loom\1.16.5\net.fabricmc.yarn.1_16_5.1.16.5+build.10-v2\mappings.tiny" />
+    <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="Never_SpookyBuy.test" options="&quot;-AoutRefMapFile=D:\IdeaProjects\Never SpookyBuy\build\classes\java\test\test-spookybuy-refmap.json&quot; -AdefaultObfuscationEnv=named:intermediary -Aquiet=true &quot;-AoutMapFileNamedIntermediary=D:\IdeaProjects\Never SpookyBuy\build\loom-cache\mixin-map-net.fabricmc.yarn.1_16_5.1.16.5+build.10-v2.test.tiny&quot; -AinMapFileNamedIntermediary=D:\GradleCache\caches\fabric-loom\1.16.5\net.fabricmc.yarn.1_16_5.1.16.5+build.10-v2\mappings.tiny" />
+    </option>
+  </component>
+</project>
