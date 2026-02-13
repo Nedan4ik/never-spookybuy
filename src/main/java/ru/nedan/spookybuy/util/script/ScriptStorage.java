@@ -8,7 +8,6 @@ import net.minecraft.client.util.Window;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.logging.log4j.util.Supplier;
 import org.openjdk.nashorn.api.scripting.ScriptObjectMirror;
-import ru.nedan.neverapi.NeverAPI;
 import ru.nedan.neverapi.event.api.Event;
 
 import javax.script.ScriptEngine;

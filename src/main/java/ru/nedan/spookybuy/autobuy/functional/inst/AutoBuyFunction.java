@@ -58,8 +58,6 @@ public class AutoBuyFunction implements ABTicker, ABMessageListener, ABInputList
         this.autoBuy = autoBuy;
     }
 
-    private final Set<Integer> slotSet = new HashSet<>(), clicked = new HashSet<>();
-
     // STATS
     @Getter
     private BigDecimal sell = BigDecimal.ZERO, buy = BigDecimal.ZERO;
@@ -102,8 +100,6 @@ public class AutoBuyFunction implements ABTicker, ABMessageListener, ABInputList
                             mc.player.closeHandledScreen();
 
                             NeverAPI.getApi().getEventBus().post(new EventStopResell());
-
-//                                unStackItems();
                         } else {
                             clickSilent(sId, 0);
                         }
@@ -126,8 +122,6 @@ public class AutoBuyFunction implements ABTicker, ABMessageListener, ABInputList
             }
 
             if (timers.get("ab.update").hasPasses(270)) {
-                slotSet.clear();
-                clicked.clear();
                 clickSilent(sId, 49);
                 timers.get("ab.update").updateLast();
             }
@@ -144,22 +138,21 @@ public class AutoBuyFunction implements ABTicker, ABMessageListener, ABInputList
                 }
             }
 
-            List<Slot> slots = new ArrayList<>(screenHandler.slots);
+            TimerUtility buyTimer = timers.get("ab.buy");
+            if (!buyTimer.hasPasses(450)) return;
 
-            for (Slot slot : slots) {
-                slotSet.add(slot.id);
-
+            for (Slot slot : screenHandler.slots) {
                 ItemStack stack = slot.getStack();
 
-                if (stack.isEmpty()) return;
+                if (stack.isEmpty()) continue;
 
                 int totalPrice = Utils.getPrice(stack);
-                if (totalPrice <= 0) return;
+                if (totalPrice <= 0) continue;
+
+                if (totalPrice > autoBuy.balance.intValue()) continue;
 
                 int count = stack.getCount();
                 int stackPrice = totalPrice / count;
-
-                if (totalPrice > autoBuy.balance.intValue()) return;
 
                 CollectItem collectItem = null;
                 for (CollectItem item : ItemStorage.ALL) {
@@ -169,15 +162,16 @@ public class AutoBuyFunction implements ABTicker, ABMessageListener, ABInputList
                     }
                 }
 
-                if (collectItem == null) return;
+                if (collectItem == null) continue;
 
                 BigDecimal limitPrice = autoBuy.getPriceMap().getPrice(collectItem, false);
-                if (limitPrice == null || limitPrice.compareTo(BigDecimal.valueOf(stackPrice)) < 0) return;
+                if (limitPrice == null) continue;
 
-                TimerUtility buyTimer = timers.get("ab.buy");
-                if (!buyTimer.hasPasses(450)) return;
+                if (limitPrice.compareTo(BigDecimal.valueOf(stackPrice)) < 0) continue;
 
                 buyTimer.updateLast();
+                timers.get("ab.update").updateLast();
+
                 activeStack = stack.copy();
                 activeCollect = collectItem;
 
@@ -189,7 +183,7 @@ public class AutoBuyFunction implements ABTicker, ABMessageListener, ABInputList
                         mc.player
                 );
 
-                clicked.add(slot.id);
+                break;
             }
         } else {
             if (timers.get("autosell.open").hasPasses(3000)) {
@@ -253,6 +247,7 @@ public class AutoBuyFunction implements ABTicker, ABMessageListener, ABInputList
     @Override
     public void message(EventMessage e) {
         String mes = e.getMessage();
+        assert mc.player != null;
 
         if (!e.isSend()) {
             if (ChatUtil.stripTextFormat(mes).equalsIgnoreCase("[☃] Освободите хранилище или уберите предметы с продажи")) {
@@ -349,7 +344,7 @@ public class AutoBuyFunction implements ABTicker, ABMessageListener, ABInputList
     }
 
     // ANTI AFK
-    private TimerUtility notifyTimer = new TimerUtility();
+    private final TimerUtility notifyTimer = new TimerUtility();
 
     @Override
     public void input(EventInput e) {
