@@ -121,7 +121,7 @@ public class AutoBuyFunction implements ABTicker, ABMessageListener, ABInputList
                 }
             }
 
-            if (timers.get("ab.update").hasPasses(270)) {
+            if (timers.get("ab.update").hasPasses(350)) {
                 clickSilent(sId, 49);
                 timers.get("ab.update").updateLast();
             }
@@ -139,7 +139,7 @@ public class AutoBuyFunction implements ABTicker, ABMessageListener, ABInputList
             }
 
             TimerUtility buyTimer = timers.get("ab.buy");
-            if (!buyTimer.hasPasses(450)) return;
+            if (!buyTimer.hasPasses(20)) return;
 
             for (Slot slot : screenHandler.slots) {
                 ItemStack stack = slot.getStack();
@@ -250,7 +250,7 @@ public class AutoBuyFunction implements ABTicker, ABMessageListener, ABInputList
         assert mc.player != null;
 
         if (!e.isSend()) {
-            if (ChatUtil.stripTextFormat(mes).equalsIgnoreCase("[☃] Освободите хранилище или уберите предметы с продажи")) {
+            if (ChatUtil.stripTextFormat(mes).matches("\\[☃\\] Не удалось выставить .+, освободите хранилище или арендуйте больше слотов на /ah rent!")) {
                 flags.replace("autoSell", false);
                 return;
             }

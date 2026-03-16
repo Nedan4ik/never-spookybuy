@@ -202,7 +202,7 @@ public class ItemStorage {
                         EffectData.of(GLOWING, 180, 0))
                         .setName("Хлопушка"),
                 new PotionItem(true, 16777215,
-                        EffectData.of(REGENERATION, 60, 1), EffectData.of(INVISIBILITY, 600, 1), EffectData.instant(INSTANT_HEALTH, 1))
+                        EffectData.of(REGENERATION, 45, 0), EffectData.of(INVISIBILITY, 600, 1), EffectData.instant(INSTANT_HEALTH, 1))
                         .setName("Святая вода"),
                 new PotionItem(true, 10040115,
                         EffectData.of(STRENGTH, 30, 4), EffectData.of(SLOWNESS, 30, 3))
@@ -220,7 +220,7 @@ public class ItemStorage {
                         EffectData.of(WEAKNESS, 90, 0), EffectData.of(MINING_FATIGUE, 10, 0), EffectData.of(WITHER, 90, 2), EffectData.of(BLINDNESS, 10, 0))
                         .setName("Снотворное"),
                 new SphereItem("ewogICJ0aW1lc3RhbXAiIDogMTc1MDI3ODY0MTkwMCwKICAicHJvZmlsZUlkIiA6ICIxNzRjZmRiNGEzY2I0M2I1YmZjZGU0MjRjM2JiMmM2ZSIsCiAgInByb2ZpbGVOYW1lIiA6ICJtYXJhZWwxOCIsCiAgInNpZ25hdHVyZVJlcXVpcmVkIiA6IHRydWUsCiAgInRleHR1cmVzIiA6IHsKICAgICJTS0lOIiA6IHsKICAgICAgInVybCIgOiAiaHR0cDovL3RleHR1cmVzLm1pbmVjcmFmdC5uZXQvdGV4dHVyZS9lN2E3YWU3Y2RjZjYxNmU4YjdhNDIyMWE2MjFiMjQzNTc1M2M2MGVkNmEyNThlYTA2MGRhZTMwMDJmZmU5ZTI4IiwKICAgICAgIm1ldGFkYXRhIiA6IHsKICAgICAgICAibW9kZWwiIDogInNsaW0iCiAgICAgIH0KICAgIH0KICB9Cn0=", new int[]{-1582985800,1375286202,-1125478243,595287099},
-                        AttributeData.of(GENERIC_MOVEMENT_SPEED, 0.07, MULTIPLY_BASE), AttributeData.of(GENERIC_MAX_HEALTH, -4, ADDITION), AttributeData.of(GENERIC_ATTACK_SPEED, 0.13, MULTIPLY_BASE), AttributeData.of(GENERIC_ARMOR, 2, ADDITION), AttributeData.of(GENERIC_ATTACK_DAMAGE, 3, ADDITION))
+                        AttributeData.of(GENERIC_MOVEMENT_SPEED, 0.07, MULTIPLY_BASE), AttributeData.of(GENERIC_MAX_HEALTH, -4, ADDITION), AttributeData.of(GENERIC_ATTACK_SPEED, 0.13, MULTIPLY_BASE), AttributeData.of(GENERIC_ARMOR, 1.5, ADDITION), AttributeData.of(GENERIC_ATTACK_DAMAGE, 2.5, ADDITION))
                         .setName("Сфера Хаоса"),
                 new SphereItem("ewogICJ0aW1lc3RhbXAiIDogMTc1MDI3ODYwODUyOCwKICAicHJvZmlsZUlkIiA6ICJkMTQ4NjFiM2UwZmM0Njk5OTFlMTcyNTllMzdiZjZhZCIsCiAgInByb2ZpbGVOYW1lIiA6ICJyYXhpdG9jbCIsCiAgInNpZ25hdHVyZVJlcXVpcmVkIiA6IHRydWUsCiAgInRleHR1cmVzIiA6IHsKICAgICJTS0lOIiA6IHsKICAgICAgInVybCIgOiAiaHR0cDovL3RleHR1cmVzLm1pbmVjcmFmdC5uZXQvdGV4dHVyZS83NzFhOWE0OThiNGZhNWVjNDkzNjJmOWJjODhlZGE0ZjUyYjA0ZGU0OWQ3NWFhM2NhMzMyYTFmZWExYWEwZTU3IiwKICAgICAgIm1ldGFkYXRhIiA6IHsKICAgICAgICAibW9kZWwiIDogInNsaW0iCiAgICAgIH0KICAgIH0KICB9Cn0=", new int[]{-2101547208,2058105556,-1495491604,1400184240},
                         AttributeData.of(GENERIC_ATTACK_SPEED, 0.15, MULTIPLY_BASE), AttributeData.of(GENERIC_ATTACK_DAMAGE, 2, ADDITION))
@@ -238,7 +238,7 @@ public class ItemStorage {
                         AttributeData.of(GENERIC_ATTACK_DAMAGE, 2, ADDITION), AttributeData.of(GENERIC_MAX_HEALTH, 2, ADDITION))
                         .setName("Сфера Икара"),
                 new SphereItem("eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvODFlOTY5ODQ1OGI3ODQxYzk2YWU0ZjI0ZWM4NGFlMDE3MjQxMDA2NDFjNTY0ZTJhN2IxODVmNDA2ZThlZDIzIn19fQ==", new int[]{654012711,1596536861,-2049048826,-850597571},
-                        AttributeData.of(GENERIC_ARMOR_TOUGHNESS, 3, ADDITION), AttributeData.of(GENERIC_MOVEMENT_SPEED, -0.15, MULTIPLY_BASE), AttributeData.of(GENERIC_ARMOR, 3, ADDITION))
+                        AttributeData.of(GENERIC_ARMOR_TOUGHNESS, 2.5, ADDITION), AttributeData.of(GENERIC_MOVEMENT_SPEED, -0.15, MULTIPLY_BASE), AttributeData.of(GENERIC_ARMOR, 2.5, ADDITION))
                         .setName("Сфера Титана"),
                 new SphereItem("ewogICJ0aW1lc3RhbXAiIDogMTc1MDM0Mzg2MTE4NywKICAicHJvZmlsZUlkIiA6ICJlZGUyYzdhMGFjNjM0MTNiYjA5ZDNmMGJlZTllYzhlYyIsCiAgInByb2ZpbGVOYW1lIiA6ICJ0aGVEZXZKYWRlIiwKICAic2lnbmF0dXJlUmVxdWlyZWQiIDogdHJ1ZSwKICAidGV4dHVyZXMiIDogewogICAgIlNLSU4iIDogewogICAgICAidXJsIiA6ICJodHRwOi8vdGV4dHVyZXMubWluZWNyYWZ0Lm5ldC90ZXh0dXJlLzZlNGUyZjEwNDdmM2VjNmU5ZTQ1OTE4NDczOWUzM2I3YzFmYzYzYWQ4MjAyYmRhYjlmMDI0NTA4YWRkMjNlNWIiLAogICAgICAibWV0YWRhdGEiIDogewogICAgICAgICJtb2RlbCIgOiAic2xpbSIKICAgICAgfQogICAgfQogIH0KfQ==", new int[]{-122635583,2062758360,-2035264015,874042263},
                         AttributeData.of(GENERIC_LUCK, 1, ADDITION), AttributeData.of(GENERIC_MAX_HEALTH, 2, ADDITION))

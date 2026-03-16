@@ -3,8 +3,8 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/Never_SpookyBuy.iml" filepath="$PROJECT_DIR$/.idea/modules/Never_SpookyBuy.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/Never_SpookyBuy.main.iml" filepath="$PROJECT_DIR$/.idea/modules/Never_SpookyBuy.main.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/Never_SpookyBuy.test.iml" filepath="$PROJECT_DIR$/.idea/modules/Never_SpookyBuy.test.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/never-spookybuy-master.main.iml" filepath="$PROJECT_DIR$/.idea/modules/never-spookybuy-master.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/never-spookybuy-master.test.iml" filepath="$PROJECT_DIR$/.idea/modules/never-spookybuy-master.test.iml" />
     </modules>
   </component>
 </project>
