@@ -72,6 +72,10 @@ public class AutoBuyFunction implements ABTicker, ABMessageListener, ABInputList
     private final Pattern sellPattern = Pattern.compile("^\\[☃] У Вас купили (.+) за \\$([\\d,]+) на /ah$");
     private final Pattern buyPattern = Pattern.compile("^\\[☃] Вы успешно купили (.+) за \\$([\\d,]+)!$");
 
+    private boolean rejoining;
+    private final TimerUtility reconnectTimer = new TimerUtility();
+    private static final long RECONNECT_INTERVAL = 240000; // 4 минуты в миллисекундах
+
     @Override
     public void tick(EventPlayerTick e) {
         if (AutoParser.getInstance().tick()) return;
@@ -80,6 +84,11 @@ public class AutoBuyFunction implements ABTicker, ABMessageListener, ABInputList
 
         assert mc.interactionManager != null;
         assert mc.player != null;
+
+        // Проверяем, нужно ли выполнить переподключение (каждые 5 минут)
+        if (SpookyBuy.getInstance().isState() && !rejoining && reconnectTimer.hasPasses(RECONNECT_INTERVAL)) {
+            performReconnect();
+        }
 
         if (mc.currentScreen instanceof GenericContainerScreen screen) {
             GenericContainerScreenHandler screenHandler = screen.getScreenHandler();
@@ -121,7 +130,7 @@ public class AutoBuyFunction implements ABTicker, ABMessageListener, ABInputList
                 }
             }
 
-            if (timers.get("ab.update").hasPasses(350)) {
+            if (timers.get("ab.update").hasPasses(400)) {
                 clickSilent(sId, 49);
                 timers.get("ab.update").updateLast();
             }
@@ -242,8 +251,6 @@ public class AutoBuyFunction implements ABTicker, ABMessageListener, ABInputList
         }
     }
 
-    boolean rejoining;
-
     @Override
     public void message(EventMessage e) {
         String mes = e.getMessage();
@@ -255,22 +262,10 @@ public class AutoBuyFunction implements ABTicker, ABMessageListener, ABInputList
                 return;
             }
 
-            if (mes.equalsIgnoreCase("Данная команда недоступна в режиме AFK") || mes.equalsIgnoreCase("Недопустимо нажимать в режиме AFK") && !rejoining) {
-                RECONNECT_EXECUTOR.execute(() -> {
-                    rejoining = true;
-                    String anarchy = Utils.getCurrentAnarchy();
-                    mc.player.sendChatMessage("/hub");
-
-                    try {
-                        Thread.sleep(1200);
-                    } catch (InterruptedException ex) {
-                        ex.printStackTrace(System.err);
-                    }
-
-                    mc.player.sendChatMessage("/an" + anarchy);
-                    rejoining = false;
-                });
-
+            // AFK сообщения больше не вызывают переподключение
+            if (mes.equalsIgnoreCase("Данная команда недоступна в режиме AFK") ||
+                    mes.equalsIgnoreCase("Недопустимо нажимать в режиме AFK")) {
+                // Просто игнорируем, ничего не делаем
                 return;
             }
 
@@ -365,6 +360,39 @@ public class AutoBuyFunction implements ABTicker, ABMessageListener, ABInputList
             e.setJumping(false);
             e.setSneaking(false);
         }
+    }
+
+    /**
+     * Выполняет переподключение на сервер
+     */
+    private void performReconnect() {
+        if (rejoining) return;
+
+        RECONNECT_EXECUTOR.execute(() -> {
+            rejoining = true;
+
+            String anarchy = Utils.getCurrentAnarchy();
+
+
+
+            // Отправляем /hub
+            mc.player.sendChatMessage("/hub");
+
+            try {
+                Thread.sleep(900); // Ждем 1.2 секунды
+            } catch (InterruptedException ex) {
+                ex.printStackTrace(System.err);
+            }
+
+            // Отправляем /an + anarchy
+            mc.player.sendChatMessage("/an" + anarchy);
+
+
+            rejoining = false;
+
+            // Сбрасываем таймер для следующего переподключения через 5 минут
+            reconnectTimer.updateLast();
+        });
     }
 
     private void clickSilent(int containerId, int slot) {
