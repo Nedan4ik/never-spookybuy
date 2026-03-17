@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "id": "spookybuy",
+  "version": "1.9-TEST-4",
+  "name": "SpookyBuy",
+  "description": "",
+  "authors": [],
+  "contact": {},
+  "license": "All-Rights-Reserved",
+  "icon": "assets/spookybuy/icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "main": [
+      "ru.nedan.spookybuy.SpookyBuy"
+    ]
+  },
+  "mixins": [
+    "spookybuy.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.16.14",
+    "minecraft": "1.16.5",
+    "neverapi": ">=1.7.2"
+  }
+}

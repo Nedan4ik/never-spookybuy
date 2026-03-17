@@ -1,0 +1,16 @@
+v1	named	intermediary
+FIELD	ru/nedan/spookybuy/mixin/MixinInGameHud	I	scaledHeight	field_2029
+FIELD	ru/nedan/spookybuy/mixin/MixinInGameHud	I	scaledWidth	field_2011
+FIELD	ru/nedan/spookybuy/mixin/MixinInGameHud	Lnet/minecraft/client/MinecraftClient;	client	field_2035
+FIELD	ru/nedan/spookybuy/mixin/MixinScoreboard	Ljava/util/Map;	teamsByPlayer	field_1427
+FIELD	ru/nedan/spookybuy/mixin/MixinScoreboard	Ljava/util/Map;	teams	field_1426
+FIELD	ru/nedan/spookybuy/mixin/MixinScreenshotUtils	Lorg/apache/logging/log4j/Logger;	LOGGER	field_1974
+METHOD	ru/nedan/spookybuy/mixin/MixinInGameHud	()Lnet/minecraft/client/font/TextRenderer;	getFontRenderer	method_1756
+METHOD	ru/nedan/spookybuy/mixin/MixinInGameHud	(Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/scoreboard/ScoreboardObjective;)V	renderScoreboardSidebar	method_1757
+METHOD	ru/nedan/spookybuy/mixin/MixinScoreboard	(Ljava/lang/String;)Lnet/minecraft/scoreboard/Team;	getPlayerTeam	method_1164
+METHOD	ru/nedan/spookybuy/mixin/MixinScoreboard	(Lnet/minecraft/scoreboard/Team;)V	updateRemovedTeam	method_1193
+METHOD	ru/nedan/spookybuy/mixin/MixinScoreboard	(Ljava/lang/String;Lnet/minecraft/scoreboard/Team;)V	removePlayerFromTeam	method_1157
+METHOD	ru/nedan/spookybuy/mixin/MixinScoreboard	(Lnet/minecraft/scoreboard/Team;)V	removeTeam	method_1191
+METHOD	ru/nedan/spookybuy/mixin/MixinScreenshotUtils	(IILnet/minecraft/client/gl/Framebuffer;)Lnet/minecraft/client/texture/NativeImage;	takeScreenshot	method_1663
+METHOD	ru/nedan/spookybuy/mixin/MixinScreenshotUtils	(Ljava/io/File;)Ljava/io/File;	getScreenshotFilename	method_1660
+METHOD	ru/nedan/spookybuy/mixin/MixinScreenshotUtils	(Ljava/io/File;Ljava/lang/String;IILnet/minecraft/client/gl/Framebuffer;Ljava/util/function/Consumer;)V	saveScreenshotInner	method_1662
