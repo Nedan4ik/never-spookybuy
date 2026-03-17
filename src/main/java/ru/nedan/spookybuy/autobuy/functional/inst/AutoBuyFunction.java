@@ -5,6 +5,7 @@ import lombok.Setter;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ingame.GenericContainerScreen;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
 import net.minecraft.network.packet.c2s.play.ClickSlotC2SPacket;
 import net.minecraft.network.packet.c2s.play.UpdateSelectedSlotC2SPacket;
 import net.minecraft.screen.GenericContainerScreenHandler;
@@ -33,13 +34,12 @@ import ru.nedan.spookybuy.event.EventStartResell;
 import ru.nedan.spookybuy.event.EventStopResell;
 import ru.nedan.spookybuy.items.CollectItem;
 import ru.nedan.spookybuy.items.ItemStorage;
-import ru.nedan.spookybuy.util.telegram.TelegramAPI;
 import ru.nedan.spookybuy.util.Utils;
+import ru.nedan.spookybuy.util.telegram.TelegramAPI;
 
 import java.math.BigDecimal;
-import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.Map;
+import java.util.Random;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -47,8 +47,6 @@ import java.util.regex.Pattern;
 public class AutoBuyFunction implements ABTicker, ABMessageListener, ABInputListener {
     private final AutoBuy autoBuy;
     private static final MinecraftClient mc = MinecraftClient.getInstance();
-    private static final ExecutorService RECONNECT_EXECUTOR = Executors.newSingleThreadExecutor(t -> new Thread(t, "Reconnect"));
-
     final Map<String, Boolean> flags;
     final Map<String, TimerUtility> timers;
 
@@ -72,9 +70,17 @@ public class AutoBuyFunction implements ABTicker, ABMessageListener, ABInputList
     private final Pattern sellPattern = Pattern.compile("^\\[☃] У Вас купили (.+) за \\$([\\d,]+) на /ah$");
     private final Pattern buyPattern = Pattern.compile("^\\[☃] Вы успешно купили (.+) за \\$([\\d,]+)!$");
 
-    private boolean rejoining;
-    private final TimerUtility reconnectTimer = new TimerUtility();
-    private static final long RECONNECT_INTERVAL = 240000; // 4 минуты в миллисекундах
+
+    // Переменные для рандомизации update задержки
+    private final Random random = new Random();
+    private static final int UPDATE_MIN_DELAY = 250; // минимальная задержка 250 мс
+    private static final int UPDATE_MAX_DELAY = 300; // максимальная задержка 450 мс
+    private int currentUpdateDelay = UPDATE_MIN_DELAY;
+
+    // Таймер для проверки gray_dye
+    private final TimerUtility grayDyeCheckTimer = new TimerUtility();
+    private static int GRAY_DYE_CHECK_INTERVAL = 1000; // Проверка каждую секунду
+    private static int GRAY_DYE_LIMIT = 2; // Лимит gray_dye в слотах
 
     @Override
     public void tick(EventPlayerTick e) {
@@ -85,14 +91,28 @@ public class AutoBuyFunction implements ABTicker, ABMessageListener, ABInputList
         assert mc.interactionManager != null;
         assert mc.player != null;
 
-        // Проверяем, нужно ли выполнить переподключение (каждые 5 минут)
-        if (SpookyBuy.getInstance().isState() && !rejoining && reconnectTimer.hasPasses(RECONNECT_INTERVAL)) {
-            performReconnect();
-        }
+
 
         if (mc.currentScreen instanceof GenericContainerScreen screen) {
             GenericContainerScreenHandler screenHandler = screen.getScreenHandler();
             int sId = screenHandler.syncId;
+
+            // Проверяем наличие gray_dye в слотах
+            if (grayDyeCheckTimer.hasPasses(GRAY_DYE_CHECK_INTERVAL)) {
+                int grayDyeCount = countGrayDye(screenHandler);
+                if (grayDyeCount > GRAY_DYE_LIMIT) {
+                    // Закрываем сундук
+                    mc.player.closeHandledScreen();
+
+                    TextBuilder textBuilder = SpookyBuy.getSpookyBuyAppender().copy()
+                            .append("Обнаружено более " + GRAY_DYE_LIMIT + " не актуальных предметов. Обход найден by Zr3");
+                    ChatUtility.sendMessage(textBuilder.build());
+
+                    grayDyeCheckTimer.updateLast();
+                    return;
+                }
+                grayDyeCheckTimer.updateLast();
+            }
 
             if (flags.get("resell")) {
                 if (timers.get("ab.resellItem").hasPasses(400)) {
@@ -130,9 +150,13 @@ public class AutoBuyFunction implements ABTicker, ABMessageListener, ABInputList
                 }
             }
 
-            if (timers.get("ab.update").hasPasses(400)) {
+            // Рандомизированная задержка для update
+            if (timers.get("ab.update").hasPasses(currentUpdateDelay)) {
                 clickSilent(sId, 49);
                 timers.get("ab.update").updateLast();
+
+                // Генерируем новую случайную задержку для следующего раза
+                randomizeUpdateDelay();
             }
 
             long time = SpookyBuy.getInstance().getAutoSetupTime();
@@ -148,7 +172,7 @@ public class AutoBuyFunction implements ABTicker, ABMessageListener, ABInputList
             }
 
             TimerUtility buyTimer = timers.get("ab.buy");
-            if (!buyTimer.hasPasses(20)) return;
+            if (!buyTimer.hasPasses(100)) return;
 
             for (Slot slot : screenHandler.slots) {
                 ItemStack stack = slot.getStack();
@@ -195,14 +219,14 @@ public class AutoBuyFunction implements ABTicker, ABMessageListener, ABInputList
                 break;
             }
         } else {
-            if (timers.get("autosell.open").hasPasses(3000)) {
+            if (timers.get("autosell.open").hasPasses(2500)) {
                 mc.player.sendChatMessage("/ah");
                 timers.get("autosell.open").updateLast();
             }
 
             if (!flags.get("autoSell")) return;
 
-            if (timers.get("autosell.sell").hasPasses(1500)) {
+            if (timers.get("autosell.sell").hasPasses(1000)) {
                 for (int i = 0; i <= 36; ++i) {
                     if (i == 36) {
                         flags.replace("autoSell", false);
@@ -249,6 +273,57 @@ public class AutoBuyFunction implements ABTicker, ABMessageListener, ABInputList
                 }
             }
         }
+    }
+
+    /**
+     * Подсчитывает количество gray_dye в слотах сундука
+     * @param screenHandler обработчик экрана сундука
+     * @return количество gray_dye
+     */
+    private int countGrayDye(GenericContainerScreenHandler screenHandler) {
+        int count = 0;
+        for (Slot slot : screenHandler.slots) {
+            ItemStack stack = slot.getStack();
+            if (!stack.isEmpty() && stack.getItem() == Items.GRAY_DYE) {
+                count += stack.getCount();
+            }
+        }
+        return count;
+    }
+
+    /**
+     * Рандомизирует задержку для update между минимальным и максимальным значениями
+     */
+    private void randomizeUpdateDelay() {
+        currentUpdateDelay = UPDATE_MIN_DELAY + random.nextInt(UPDATE_MAX_DELAY - UPDATE_MIN_DELAY + 1);
+    }
+
+    /**
+     * Устанавливает диапазон рандомизации для update задержки
+     * @param min минимальная задержка в миллисекундах
+     * @param max максимальная задержка в миллисекундах
+     */
+    public void setUpdateDelayRange(int min, int max) {
+        if (min > max) {
+            throw new IllegalArgumentException("Min delay cannot be greater than max delay");
+        }
+        currentUpdateDelay = min + random.nextInt(max - min + 1);
+    }
+
+    /**
+     * Устанавливает лимит gray_dye для автоматического закрытия сундука
+     * @param limit новое значение лимита
+     */
+    public void setGrayDyeLimit(int limit) {
+        GRAY_DYE_LIMIT = limit;
+    }
+
+    /**
+     * Устанавливает интервал проверки gray_dye
+     * @param interval интервал в миллисекундах
+     */
+    public void setGrayDyeCheckInterval(int interval) {
+        GRAY_DYE_CHECK_INTERVAL = interval;
     }
 
     @Override
@@ -362,38 +437,6 @@ public class AutoBuyFunction implements ABTicker, ABMessageListener, ABInputList
         }
     }
 
-    /**
-     * Выполняет переподключение на сервер
-     */
-    private void performReconnect() {
-        if (rejoining) return;
-
-        RECONNECT_EXECUTOR.execute(() -> {
-            rejoining = true;
-
-            String anarchy = Utils.getCurrentAnarchy();
-
-
-
-            // Отправляем /hub
-            mc.player.sendChatMessage("/hub");
-
-            try {
-                Thread.sleep(900); // Ждем 1.2 секунды
-            } catch (InterruptedException ex) {
-                ex.printStackTrace(System.err);
-            }
-
-            // Отправляем /an + anarchy
-            mc.player.sendChatMessage("/an" + anarchy);
-
-
-            rejoining = false;
-
-            // Сбрасываем таймер для следующего переподключения через 5 минут
-            reconnectTimer.updateLast();
-        });
-    }
 
     private void clickSilent(int containerId, int slot) {
         assert mc.player != null;
