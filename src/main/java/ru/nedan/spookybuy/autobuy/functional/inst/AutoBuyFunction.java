@@ -40,12 +40,16 @@ import ru.nedan.spookybuy.util.telegram.TelegramAPI;
 import java.math.BigDecimal;
 import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @SuppressWarnings("UnstableApiUsage")
 public class AutoBuyFunction implements ABTicker, ABMessageListener, ABInputListener {
     private final AutoBuy autoBuy;
+    private static final ExecutorService
+            RECONNECT_EXECUTOR = Executors.newSingleThreadExecutor(t -> new Thread(t, "Reconnect"));
     private static final MinecraftClient mc = MinecraftClient.getInstance();
     final Map<String, Boolean> flags;
     final Map<String, TimerUtility> timers;
@@ -73,14 +77,13 @@ public class AutoBuyFunction implements ABTicker, ABMessageListener, ABInputList
 
     // Переменные для рандомизации update задержки
     private final Random random = new Random();
-    private static final int UPDATE_MIN_DELAY = 250; // минимальная задержка 250 мс
-    private static final int UPDATE_MAX_DELAY = 300; // максимальная задержка 450 мс
+    private static final int UPDATE_MIN_DELAY = 350; // минимальная задержка 250 мс
+    private static final int UPDATE_MAX_DELAY = 395; // максимальная задержка 450 мс
     private int currentUpdateDelay = UPDATE_MIN_DELAY;
 
     // Таймер для проверки gray_dye
-    private final TimerUtility grayDyeCheckTimer = new TimerUtility();
-    private static int GRAY_DYE_CHECK_INTERVAL = 1000; // Проверка каждую секунду
-    private static int GRAY_DYE_LIMIT = 2; // Лимит gray_dye в слотах
+    private final TimerUtility menuUpdateTimer = new TimerUtility();
+    private String lastMenuContent = "";
 
     @Override
     public void tick(EventPlayerTick e) {
@@ -97,22 +100,19 @@ public class AutoBuyFunction implements ABTicker, ABMessageListener, ABInputList
             GenericContainerScreenHandler screenHandler = screen.getScreenHandler();
             int sId = screenHandler.syncId;
 
-            // Проверяем наличие gray_dye в слотах
-            if (grayDyeCheckTimer.hasPasses(GRAY_DYE_CHECK_INTERVAL)) {
-                int grayDyeCount = countGrayDye(screenHandler);
-                if (grayDyeCount > GRAY_DYE_LIMIT) {
-                    // Закрываем сундук
-                    mc.player.closeHandledScreen();
-
-                    TextBuilder textBuilder = SpookyBuy.getSpookyBuyAppender().copy()
-                            .append("Обнаружено более " + GRAY_DYE_LIMIT + " не актуальных предметов. Обход найден by Zr3");
-                    ChatUtility.sendMessage(textBuilder.build());
-
-                    grayDyeCheckTimer.updateLast();
-                    return;
-                }
-                grayDyeCheckTimer.updateLast();
+            String currentTitle = ChatUtil.stripTextFormat(screen.getTitle().getString());
+            if (!currentTitle.equals(lastMenuContent)) {
+                lastMenuContent = currentTitle;
+                menuUpdateTimer.updateLast();
             }
+
+            if (menuUpdateTimer.hasPasses(5000)) {
+
+                mc.player.closeHandledScreen();
+                menuUpdateTimer.updateLast();
+                return;
+            }
+
 
             if (flags.get("resell")) {
                 if (timers.get("ab.resellItem").hasPasses(400)) {
@@ -172,7 +172,7 @@ public class AutoBuyFunction implements ABTicker, ABMessageListener, ABInputList
             }
 
             TimerUtility buyTimer = timers.get("ab.buy");
-            if (!buyTimer.hasPasses(100)) return;
+            if (!buyTimer.hasPasses(25)) return;
 
             for (Slot slot : screenHandler.slots) {
                 ItemStack stack = slot.getStack();
@@ -219,14 +219,14 @@ public class AutoBuyFunction implements ABTicker, ABMessageListener, ABInputList
                 break;
             }
         } else {
-            if (timers.get("autosell.open").hasPasses(2500)) {
+            if (timers.get("autosell.open").hasPasses(1500)) {
                 mc.player.sendChatMessage("/ah");
                 timers.get("autosell.open").updateLast();
             }
 
             if (!flags.get("autoSell")) return;
 
-            if (timers.get("autosell.sell").hasPasses(1000)) {
+            if (timers.get("autosell.sell").hasPasses(500)) {
                 for (int i = 0; i <= 36; ++i) {
                     if (i == 36) {
                         flags.replace("autoSell", false);
@@ -275,21 +275,8 @@ public class AutoBuyFunction implements ABTicker, ABMessageListener, ABInputList
         }
     }
 
-    /**
-     * Подсчитывает количество gray_dye в слотах сундука
-     * @param screenHandler обработчик экрана сундука
-     * @return количество gray_dye
-     */
-    private int countGrayDye(GenericContainerScreenHandler screenHandler) {
-        int count = 0;
-        for (Slot slot : screenHandler.slots) {
-            ItemStack stack = slot.getStack();
-            if (!stack.isEmpty() && stack.getItem() == Items.GRAY_DYE) {
-                count += stack.getCount();
-            }
-        }
-        return count;
-    }
+    boolean rejoining;
+
 
     /**
      * Рандомизирует задержку для update между минимальным и максимальным значениями
@@ -298,33 +285,6 @@ public class AutoBuyFunction implements ABTicker, ABMessageListener, ABInputList
         currentUpdateDelay = UPDATE_MIN_DELAY + random.nextInt(UPDATE_MAX_DELAY - UPDATE_MIN_DELAY + 1);
     }
 
-    /**
-     * Устанавливает диапазон рандомизации для update задержки
-     * @param min минимальная задержка в миллисекундах
-     * @param max максимальная задержка в миллисекундах
-     */
-    public void setUpdateDelayRange(int min, int max) {
-        if (min > max) {
-            throw new IllegalArgumentException("Min delay cannot be greater than max delay");
-        }
-        currentUpdateDelay = min + random.nextInt(max - min + 1);
-    }
-
-    /**
-     * Устанавливает лимит gray_dye для автоматического закрытия сундука
-     * @param limit новое значение лимита
-     */
-    public void setGrayDyeLimit(int limit) {
-        GRAY_DYE_LIMIT = limit;
-    }
-
-    /**
-     * Устанавливает интервал проверки gray_dye
-     * @param interval интервал в миллисекундах
-     */
-    public void setGrayDyeCheckInterval(int interval) {
-        GRAY_DYE_CHECK_INTERVAL = interval;
-    }
 
     @Override
     public void message(EventMessage e) {
@@ -340,7 +300,22 @@ public class AutoBuyFunction implements ABTicker, ABMessageListener, ABInputList
             // AFK сообщения больше не вызывают переподключение
             if (mes.equalsIgnoreCase("Данная команда недоступна в режиме AFK") ||
                     mes.equalsIgnoreCase("Недопустимо нажимать в режиме AFK")) {
-                // Просто игнорируем, ничего не делаем
+                RECONNECT_EXECUTOR.execute(() -> {
+
+                    rejoining = true;
+                    String anarchy = Utils.getCurrentAnarchy();
+                    mc.player.sendChatMessage("/hub");
+
+                    try {
+                        Thread.sleep(1200);
+                    } catch (InterruptedException ex) {
+                        ex.printStackTrace(System.err);
+                    }
+
+                    mc.player.sendChatMessage("/an" + anarchy);
+                    rejoining = false;
+                });
+
                 return;
             }
 

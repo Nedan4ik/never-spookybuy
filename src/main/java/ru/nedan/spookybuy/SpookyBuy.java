@@ -33,6 +33,7 @@ import ru.nedan.spookybuy.autobuy.autoparse.coefficient.Coefficient;
 import ru.nedan.spookybuy.autobuy.functional.inst.AutoBuyFunction;
 import ru.nedan.spookybuy.screen.configs.ConfigScreen;
 import ru.nedan.spookybuy.screen.setting.SpookyBuyGui;
+import ru.nedan.spookybuy.util.Utils;
 import ru.nedan.spookybuy.util.script.ScriptStorage;
 import ru.nedan.spookybuy.util.CommandRegister;
 import ru.nedan.spookybuy.util.Discord;
@@ -103,27 +104,42 @@ public class SpookyBuy implements ModInitializer {
         discordRPC = new Discord();
         discordRPC.run();
 
-        TextVisitors.putConsumer((string, reference) -> {
-            if (string.contains(mc.getSession().getUsername())) {
-                reference.set(string.replaceAll(mc.getSession().getUsername(), "t.me/neverproduct"));
-            }
-        });
 
         Pattern donatePattern = Pattern.compile("\\b(Игрок|Барон|Страж|Герой|Глава|Аспид|Сквид|Элита|Титан|Принц|Князь|Герцог)\\b");
 
-        TextVisitors.putConsumer(((string, style, reference) -> {
+        TextVisitors.putConsumer((string, style, reference) -> {
             Matcher matcher = donatePattern.matcher(string);
+            String modifiedString = string;
 
-            /* замена любого доната на Staff
+            // Replace all donate ranks with "Staff"
             if (matcher.find()) {
-                String foundDonate = matcher.group(1);
-                reference.set(new Pair<>(string.replaceAll(foundDonate, "Staff"), style.withFormatting(Formatting.RED)));
-            }*/
-
-            if (string.contains(mc.getSession().getUsername())) {
-                reference.set(new Pair<>(string.replaceAll(mc.getSession().getUsername(), "t.me/neverproduct"), reference.get().getRight()));
+                modifiedString = matcher.replaceAll("Staff");
+                // Получаем текущий стиль и добавляем к нему красное форматирование
+                Style newStyle = style.withFormatting(Formatting.RED);
+                reference.set(new Pair<>(modifiedString, newStyle));
             }
-        }));
+
+            // Replace username
+            if (modifiedString.contains(mc.getSession().getUsername())) {
+                modifiedString = modifiedString.replaceAll(mc.getSession().getUsername(), "dsc.gg/nvrbuy");
+                reference.set(new Pair<>(modifiedString, reference.get().getRight()));
+            }
+
+            String anarchy = Utils.getCurrentAnarchy();
+
+
+            // Replace Anarchy text
+            String anarchyText = "Анархия-" + anarchy;
+            if (modifiedString.contains(anarchyText)) {
+                modifiedString = modifiedString.replace(anarchyText, "t.me/neverproduct");
+                reference.set(new Pair<>(modifiedString, reference.get().getRight()));
+            }
+            String spookyText = "shop.SpookyTime.net";
+            if (modifiedString.contains(anarchyText)) {
+                modifiedString = modifiedString.replace(spookyText, "t.me/neverproduct");
+                reference.set(new Pair<>(modifiedString, reference.get().getRight()));
+            }
+        });
 
         Event.addListener(EventWindowOpen.class, e -> {
             if (e.getScreen() instanceof GenericContainerScreen) {
