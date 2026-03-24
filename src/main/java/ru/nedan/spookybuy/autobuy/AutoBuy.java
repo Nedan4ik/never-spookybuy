@@ -13,7 +13,7 @@ import ru.nedan.neverapi.event.impl.EventPress;
 import ru.nedan.neverapi.math.TimerUtility;
 import ru.nedan.spookybuy.autobuy.functional.inst.AutoBuyFunction;
 import ru.nedan.spookybuy.items.CollectItem;
-import ru.nedan.spookybuy.items.ItemStorage;
+import ru.nedan.spookybuy.items.ItemStorag;
 
 import java.math.BigDecimal;
 import java.util.HashMap;
@@ -33,7 +33,7 @@ public class AutoBuy {
     AutoBuyFunction ab;
 
     public AutoBuy() {
-        for (CollectItem collectItem : ItemStorage.ALL) {
+        for (CollectItem collectItem : ItemStorag.ALL) {
             priceMap.putPrice(collectItem, new BigDecimal(100), true);
             priceMap.putFlag(collectItem, true);
         }
@@ -55,12 +55,12 @@ public class AutoBuy {
 
         Event.addListener(EventPress.class, e -> {
             if (e.getAction() == 1 && e.getKey() == GLFW.GLFW_KEY_KP_9 && NeverAPI.isInit()) {
-                ItemStorage.reload();
+                ItemStorag.reload();
                 priceMap.clear();
 
-                ItemStorage.reload();
+                ItemStorag.reload();
 
-                for (CollectItem collectItem : ItemStorage.ALL) {
+                for (CollectItem collectItem : ItemStorag.ALL) {
                     priceMap.putPrice(collectItem, new BigDecimal(100), true);
                     priceMap.putFlag(collectItem, true);
                 }
@@ -86,7 +86,7 @@ public class AutoBuy {
     }
 
     public CollectItem getItem(ItemStack stack) {
-        return ItemStorage.ALL.stream()
+        return ItemStorag.ALL.stream()
                 .filter(item -> CollectItem.CHECKER.test(stack, item))
                 .findFirst()
                 .orElse(null);

@@ -5,6 +5,7 @@ import lombok.Setter;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.util.Formatting;
 import net.minecraft.util.math.Vec2f;
 import ru.nedan.neverapi.animation.Animation;
 import ru.nedan.neverapi.animation.util.Easings;
@@ -45,6 +46,10 @@ public class ItemRenderer {
 
     public boolean allocated = false;
 
+    // Таймеры для защиты от спама
+    private final TimerUtility rightClickTimer = new TimerUtility();
+    private final TimerUtility middleClickTimer = new TimerUtility();
+
     public ItemRenderer(FloatRectangle position, CollectItem collectItem, float offset) {
         this.position = position;
         this.collectItem = collectItem;
@@ -73,6 +78,9 @@ public class ItemRenderer {
 
         buyPriceField.setText(buyPrice.toString());
         sellPriceField.setText(sellPrice.toString());
+
+        rightClickTimer.updateLast();
+        middleClickTimer.updateLast();
     }
 
     public float getHeight() {
@@ -116,7 +124,8 @@ public class ItemRenderer {
                     collectItem.getName(),
                     "Цена покупки: " + SpookyBuy.getInstance().getAutoBuy().getPriceMap().getPrice(collectItem, false),
                     "Цена продажи: " + SpookyBuy.getInstance().getAutoBuy().getPriceMap().getPrice(collectItem, true),
-                    "ПКМ чтобы открыть"
+                    "ПКМ - расширить/свернуть",
+                    "СКМ - открыть на аукционе"
             );
 
             TextRenderer textRenderer = MinecraftClient.getInstance().textRenderer;
@@ -181,28 +190,55 @@ public class ItemRenderer {
     }
 
     public void mouseClicked(double mouseX, double mouseY, int button) {
+        FloatRectangle position = this.position.offset(0, offset + scroll);
+
+        // Проверяем, находится ли курсор над элементом
+        boolean hovered = position.contains((float) mouseX, (float) mouseY);
+
+        if (hovered) {
+            // Обработка СКМ (средняя кнопка мыши) - открыть на аукционе
+            if (button == 2) {
+                if (middleClickTimer.hasPasses(1000)) { // Минимум 1 секунда между кликами
+                    String searchQuery = collectItem.getName(); // Просто берем название как в GUI
+                    if (mc.player != null) {
+                        mc.player.sendChatMessage("/ah search " + searchQuery);
+
+                        // Опционально: уведомление в чат
+                        ru.nedan.neverapi.etc.ChatUtility.sendMessage(
+                                new ru.nedan.neverapi.etc.TextBuilder()
+                                        .append("Открыт поиск на аукционе: ", Formatting.YELLOW)
+                                        .append(searchQuery, Formatting.WHITE)
+                                        .build()
+                        );
+                    }
+                    middleClickTimer.updateLast();
+                }
+                return;
+            }
+
+            // Обработка ПКМ (правая кнопка мыши) - расширение/сворачивание
+            if (button == 1) {
+                // Расширяем/сворачиваем элемент при ПКМ
+                extended = !extended;
+                if (extended)
+                    height.animate(position.height + 56, 0.2, Easings.QUAD_OUT);
+                else
+                    height.animate(position.height, 0.2, Easings.QUAD_OUT);
+                return;
+            }
+        }
+
+        // Обработка кликов по полям ввода и чекбоксу (только если элемент расширен)
         if (extended) {
-            FloatRectangle position = this.position.offset(0, offset + scroll);
+            // Чекбокс AutoSetup
             if (MathUtils.isHovered(new FloatRectangle(position.x + 3, position.y + (getHeight() - 16), 12, 12))) {
                 boolean flag = SpookyBuy.getInstance().getAutoBuy().getPriceMap().getAutoSetupFlag(collectItem);
                 SpookyBuy.getInstance().getAutoBuy().getPriceMap().putFlag(collectItem, !flag);
             }
-        }
 
-        if (extended) {
+            // Поля ввода цен
             buyPriceField.mouseClicked(mouseX, mouseY, button);
             sellPriceField.mouseClicked(mouseX, mouseY, button);
-        }
-
-        if (button == 1) {
-            if (position.offset(0, scroll + offset).contains((float) mouseX, (float) mouseY)) {
-                extended = !extended;
-
-                if (extended)
-                    height.animate(position.height + /*90*/56, 0.2, Easings.QUAD_OUT);
-                else
-                    height.animate(position.height, 0.2, Easings.QUAD_OUT);
-            }
         }
     }
 

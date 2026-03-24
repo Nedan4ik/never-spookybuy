@@ -109,7 +109,7 @@ public class GenericContainerScreenHook extends GenericContainerScreen {
             }, Collections.singletonList(new LiteralText("Нажмите чтобы очистить историю")));
         }
 
-        if (this.title.getString().contains("Поиск") || this.title.getString().contains("Аукционы")) {
+        if (this.title.getString().contains("Поиск") || this.title.getString().contains("Аукционы") || this.title.getString().contains("П:")) {
             if (afterInit.hasPasses(50)) {
                 if (minPrice == null) minPrice = calculateMinPriceSlot();
             }

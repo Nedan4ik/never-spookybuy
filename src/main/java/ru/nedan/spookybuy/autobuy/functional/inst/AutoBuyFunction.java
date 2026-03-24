@@ -5,7 +5,6 @@ import lombok.Setter;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ingame.GenericContainerScreen;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
 import net.minecraft.network.packet.c2s.play.ClickSlotC2SPacket;
 import net.minecraft.network.packet.c2s.play.UpdateSelectedSlotC2SPacket;
 import net.minecraft.screen.GenericContainerScreenHandler;
@@ -33,7 +32,7 @@ import ru.nedan.spookybuy.event.EventPreSell;
 import ru.nedan.spookybuy.event.EventStartResell;
 import ru.nedan.spookybuy.event.EventStopResell;
 import ru.nedan.spookybuy.items.CollectItem;
-import ru.nedan.spookybuy.items.ItemStorage;
+import ru.nedan.spookybuy.items.ItemStorag;
 import ru.nedan.spookybuy.util.Utils;
 import ru.nedan.spookybuy.util.telegram.TelegramAPI;
 
@@ -77,8 +76,8 @@ public class AutoBuyFunction implements ABTicker, ABMessageListener, ABInputList
 
     // Переменные для рандомизации update задержки
     private final Random random = new Random();
-    private static final int UPDATE_MIN_DELAY = 350; // минимальная задержка 250 мс
-    private static final int UPDATE_MAX_DELAY = 395; // максимальная задержка 450 мс
+    private static final int UPDATE_MIN_DELAY = 300; // минимальная задержка 250 мс
+    private static final int UPDATE_MAX_DELAY = 305; // максимальная задержка 450 мс
     private int currentUpdateDelay = UPDATE_MIN_DELAY;
 
     // Таймер для проверки gray_dye
@@ -106,7 +105,7 @@ public class AutoBuyFunction implements ABTicker, ABMessageListener, ABInputList
                 menuUpdateTimer.updateLast();
             }
 
-            if (menuUpdateTimer.hasPasses(5000)) {
+            if (menuUpdateTimer.hasPasses(8000)) {
 
                 mc.player.closeHandledScreen();
                 menuUpdateTimer.updateLast();
@@ -188,7 +187,7 @@ public class AutoBuyFunction implements ABTicker, ABMessageListener, ABInputList
                 int stackPrice = totalPrice / count;
 
                 CollectItem collectItem = null;
-                for (CollectItem item : ItemStorage.ALL) {
+                for (CollectItem item : ItemStorag.ALL) {
                     if (CollectItem.CHECKER.test(stack, item)) {
                         collectItem = item;
                         break;

@@ -21,9 +21,8 @@ import ru.nedan.neverapi.shader.ColorUtility;
 import ru.nedan.neverapi.shader.Rounds;
 import ru.nedan.spookybuy.SpookyBuy;
 import ru.nedan.spookybuy.items.CollectItem;
-import ru.nedan.spookybuy.items.ItemStorage;
+import ru.nedan.spookybuy.items.ItemStorag;
 import ru.nedan.spookybuy.screen.setting.ItemRenderer;
-import ru.nedan.spookybuy.screen.setting.allocation.Allocation;
 import ru.nedan.spookybuy.screen.setting.page.Page;
 import ru.nedan.spookybuy.screen.setting.page.Pages;
 import ru.nedan.spookybuy.screen.setting.page.icon.IconRenderer;
@@ -34,7 +33,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class ItemsPage extends Page {
 
@@ -69,7 +67,7 @@ public class ItemsPage extends Page {
 
         float offset = 22;
 
-        for (CollectItem collectItem : ItemStorage.ALL) {
+        for (CollectItem collectItem : ItemStorag.ALL) {
             ItemRenderer itemRenderer = new ItemRenderer(new FloatRectangle(positions.x + 3, positions.y, positions.width - 6, 18), collectItem, offset);
             renderers.add(itemRenderer);
             offset += itemRenderer.getPosition().height + 3;

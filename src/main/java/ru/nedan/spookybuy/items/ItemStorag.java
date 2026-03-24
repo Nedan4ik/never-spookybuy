@@ -20,7 +20,7 @@ import static net.minecraft.entity.attribute.EntityAttributes.*;
 import static net.minecraft.entity.effect.StatusEffects.*;
 import static net.minecraft.item.Items.*;
 
-public class ItemStorage {
+public class ItemStorag {
     public static final List<CollectItem> ALL = new ArrayList<>();
     private static final List<EnchantmentData> DEFAULT_FOR_ARMOR;
 

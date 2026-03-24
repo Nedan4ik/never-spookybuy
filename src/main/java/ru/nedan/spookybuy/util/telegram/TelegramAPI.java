@@ -20,38 +20,58 @@ import java.util.concurrent.TimeUnit;
 
 public class TelegramAPI {
     private static final ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
-    public static String token = "7883995093:AAH7tpclGxTkiN_GV710TTuNP11B8Pf9E2U";
-    public static String chatId  = /*""*//*"5712188508"*/"5100999758";
+    public static String token = "";
+    public static String chatId = "";
     private static int lastOffset = 0;
-    public static final JsonArray DEFAULT_KEYBOARD = buildInlineKeyboard(new String[][]{
-            {"Баланс", "Помощь"},
-            {"Скрин"}
+
+    public static final JsonArray START_KEYBOARD = buildInlineKeyboard(new String[][]{
+            {"Баланс", "Статистика общ"},
+            {"Скрин", "Помощь"}
     });
 
     public static void start() {
         executor.scheduleWithFixedDelay(() -> {
+            if (token == null || token.isEmpty()) return;
+
             try {
                 JsonArray array = pollMessage();
 
                 for (JsonElement object : array) {
-                    JsonObject message = object.getAsJsonObject().get("message").getAsJsonObject();
-                    if (message.get("is_bot").getAsBoolean()) continue;
+                    JsonObject update = object.getAsJsonObject();
 
-                    lastOffset = object.getAsJsonObject().get("update_id").getAsInt() + 1;
+                    if (update.has("update_id")) {
+                        lastOffset = update.get("update_id").getAsInt() + 1;
+                    }
 
-                    EventTelegramMessage event = new EventTelegramMessage(object.getAsJsonObject());
+                    if (!update.has("message")) continue;
 
-                    if (message.get("text").getAsString().equalsIgnoreCase("/start")) {
-                        event.reply("Привет " + message.getAsJsonObject().get("from").getAsJsonObject().get("first_name").getAsString() + "! Напиши \"помощь\" чтобы узнать список комманд!", DEFAULT_KEYBOARD);
+                    JsonObject message = update.get("message").getAsJsonObject();
+
+                    if (!message.has("from")) continue;
+                    JsonObject from = message.get("from").getAsJsonObject();
+
+                    if (from.has("is_bot") && from.get("is_bot").getAsBoolean()) continue;
+                    if (!message.has("text")) continue;
+
+                    String text = message.get("text").getAsString();
+                    String senderId = from.get("id").getAsString();
+
+                    if (text.equalsIgnoreCase("/start")) {
+                        if (chatId == null || chatId.isEmpty()) {
+                            chatId = senderId;
+                        }
+
                         continue;
                     }
 
-                    NeverAPI.getApi().getEventBus().post(event);
+                    if (senderId.equalsIgnoreCase(chatId)) {
+                        NeverAPI.getApi().getEventBus().post(new EventTelegramMessage(update));
+                    }
                 }
             } catch (Exception e) {
-                e.printStackTrace(System.err);
+                e.printStackTrace();
             }
-        }, 0, 3500, TimeUnit.MILLISECONDS);
+        }, 0, 1000, TimeUnit.MILLISECONDS);
     }
 
     public static void stop() {
@@ -59,7 +79,7 @@ public class TelegramAPI {
     }
 
     public static String getURL() {
-        return "api.telegram.org/bot" + token;
+        return "https://api.telegram.org/bot" + token;
     }
 
     public static void sendMessage(String message, JsonArray keyboard) {
@@ -68,212 +88,111 @@ public class TelegramAPI {
 
     public static void saveInConfig(JsonObject main) {
         JsonObject telegramObject = new JsonObject();
-
         telegramObject.addProperty("token", token);
         telegramObject.addProperty("chatId", chatId);
         telegramObject.addProperty("sendBuy", SpookyBuy.getInstance().getAutoBuy().getAb().isSendBuy());
         telegramObject.addProperty("sendSell", SpookyBuy.getInstance().getAutoBuy().getAb().isSendSell());
-
         main.add("telegram", telegramObject);
     }
 
     public static void readFromConfig(JsonElement el) {
-        if (el instanceof JsonNull) return;
-
+        if (el == null || el instanceof JsonNull) return;
         JsonObject main = el.getAsJsonObject();
-
-        if (main.has("telegram") && main.get("telegram").isJsonObject()) {
-            JsonObject telegramObject = main.getAsJsonObject("telegram");
-
-            if (telegramObject.has("token")) {
-                token = telegramObject.get("token").getAsString();
-            }
-
-            if (telegramObject.has("chatId")) {
-                chatId = telegramObject.get("chatId").getAsString();
-            }
-
-            if (telegramObject.has("sendBuy")) {
-                SpookyBuy.getInstance().getAutoBuy().getAb().setSendBuy(telegramObject.get("sendBuy").getAsBoolean());
-            }
-
-            if (telegramObject.has("sendSell")) {
-                SpookyBuy.getInstance().getAutoBuy().getAb().setSendBuy(telegramObject.get("sendSell").getAsBoolean());
-            }
+        if (main.has("telegram")) {
+            JsonObject obj = main.getAsJsonObject("telegram");
+            if (obj.has("token")) token = obj.get("token").getAsString();
+            if (obj.has("chatId")) chatId = obj.get("chatId").getAsString();
         }
     }
 
-    public static void sendMessage(String message, String chatId, JsonArray keyboard) {
+    public static void sendMessage(String message, String targetChatId, JsonArray keyboard) {
+        if (targetChatId == null || targetChatId.isEmpty()) return;
         CompletableFuture.runAsync(() -> {
             try {
-                String encodedMessage = URLEncoder.encode(message, "UTF-8");
-                String encodedChatId = URLEncoder.encode(chatId, "UTF-8");
+                String encodedText = URLEncoder.encode(message, "UTF-8");
+                StringBuilder url = new StringBuilder(getURL() + "/sendMessage?chat_id=" + targetChatId + "&text=" + encodedText + "&parse_mode=Markdown");
 
-                StringBuilder urlBuilder = new StringBuilder(getURL() + "/sendMessage?chat_id=" + encodedChatId + "&text=" + encodedMessage);
-
-                if (keyboard != null && keyboard.size() > 0) {
-                    String keyboardJson = keyboard.toString();
-                    urlBuilder.append("&reply_markup={\"keyboard\":").append(keyboardJson).append(", \"resize_keyboard\": true, \"one_time_keyboard\": false}");
+                if (keyboard != null) {
+                    JsonObject markup = new JsonObject();
+                    markup.add("keyboard", keyboard);
+                    markup.addProperty("resize_keyboard", true);
+                    url.append("&reply_markup=").append(URLEncoder.encode(markup.toString(), "UTF-8"));
                 }
 
-                HttpUtil.RequestBuilder builder = new HttpUtil.RequestBuilder()
-                        .setBody("")
-                        .setMethod("POST")
-                        .setUrl(urlBuilder.toString());
-
-                String obj = builder.build().execute();
-                JsonObject object = new JsonParser().parse(obj).getAsJsonObject();
-
-                if (!object.get("ok").getAsBoolean()) {
-                    MutableText mutableText = new LiteralText("")
-                            .append(new LiteralText("Ошибка при отправке сообщение в телеграм!").formatted(Formatting.RED))
-                            .append(" ")
-                            .append(new LiteralText(object.get("description").getAsString()).formatted(Formatting.YELLOW));
-
-                    ChatUtility.sendMessage(mutableText);
-                }
+                new HttpUtil.RequestBuilder().setUrl(url.toString()).setMethod("POST").setBody("").build().execute();
             } catch (Exception e) {
-                e.printStackTrace(System.err);
+                e.printStackTrace();
             }
         });
     }
 
-    public static void reply(JsonObject message, String text, JsonArray keyboard) {
-        try {
-            String chatId = message.get("from").getAsJsonObject().get("id").getAsString();
-            String messageId = message.get("message_id").getAsString();
-
-            String encodedText = URLEncoder.encode(text, StandardCharsets.UTF_8);
-
-            StringBuilder urlBuilder = new StringBuilder("https://api.telegram.org/bot" + token + "/sendMessage?chat_id=" + chatId + "&text=" + encodedText + "&reply_to_message_id=" + messageId);
-
-            if (keyboard != null && keyboard.size() > 0) {
-                String keyboardJson = keyboard.toString();
-                urlBuilder.append("&reply_markup={\"keyboard\":").append(keyboardJson).append(", \"resize_keyboard\": true, \"one_time_keyboard\": false}");
-            }
-
-            HttpUtil.RequestBuilder requestBuilder = new HttpUtil.RequestBuilder()
-                    .setUrl(urlBuilder.toString())
-                    .setMethod("POST")
-                    .setBody("");
-
-            requestBuilder.build().execute();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+    public static void reply(JsonObject messageObj, String text, JsonArray keyboard) {
+        if (!messageObj.has("from")) return;
+        String senderId = messageObj.get("from").getAsJsonObject().get("id").getAsString();
+        sendMessage(text, senderId, keyboard);
     }
 
     public static JsonArray buildInlineKeyboard(String[][] buttons) {
         JsonArray keyboard = new JsonArray();
-
         for (String[] row : buttons) {
-            JsonArray buttonRow = new JsonArray();
-            for (String buttonText : row) {
-                JsonObject button = new JsonObject();
-                button.addProperty("text", buttonText);
-                button.addProperty("callback_data", buttonText);
-                buttonRow.add(button);
+            JsonArray rowArr = new JsonArray();
+            for (String btnText : row) {
+                JsonObject btn = new JsonObject();
+                btn.addProperty("text", btnText);
+                rowArr.add(btn);
             }
-            keyboard.add(buttonRow);
+            keyboard.add(rowArr);
         }
-
         return keyboard;
     }
 
     public static void sendPhoto(String imgPath, String caption) {
         try {
-            String encodedCaption = URLEncoder.encode(caption, StandardCharsets.UTF_8);
+            File file = new File(imgPath);
+            if (!file.exists()) return;
 
-            System.out.println("Sending photo: " + imgPath + " Caption: " + caption);
-
-            HttpUtil.RequestBuilder requestBuilder = new HttpUtil.RequestBuilder()
-                    .setUrl(getURL() + "/sendPhoto?chat_id=" + chatId + "&caption=" + encodedCaption)
+            String url = getURL() + "/sendPhoto?chat_id=" + chatId + "&caption=" + URLEncoder.encode(caption, "UTF-8");
+            HttpUtil.RequestBuilder builder = new HttpUtil.RequestBuilder()
+                    .setUrl(url)
                     .setMethod("POST")
-                    .setConsumer(connection -> {
+                    .setConsumer(conn -> {
                         try {
-                            File imgFile = new File(imgPath);
-                            String boundary = Long.toHexString(System.currentTimeMillis());
-                            String CRLF = "\r\n";
-                            connection.setRequestProperty("Content-Type", "multipart/form-data; boundary=" + boundary);
-                            connection.setDoOutput(true);
-
-                            try (
-                                    OutputStream output = new BufferedOutputStream(connection.getOutputStream());
-                                    PrintWriter writer = new PrintWriter(new OutputStreamWriter(output, StandardCharsets.UTF_8), true);
-                                    FileInputStream inputStream = new FileInputStream(imgFile)
-                            ) {
-                                writer.append("--").append(boundary).append(CRLF);
-                                writer.append("Content-Disposition: form-data; name=\"photo\"; filename=\"").append(imgFile.getName()).append("\"").append(CRLF);
-                                writer.append("Content-Type: image/jpeg").append(CRLF);
-                                writer.append(CRLF).flush();
-
-                                byte[] buffer = new byte[8192];
-                                int bytesRead;
-                                while ((bytesRead = inputStream.read(buffer)) != -1) {
-                                    output.write(buffer, 0, bytesRead);
-                                }
-                                output.flush();
-
-                                writer.append(CRLF).flush();
-                                writer.append("--").append(boundary).append("--").append(CRLF).flush();
+                            String boundary = "---" + System.currentTimeMillis();
+                            conn.setRequestProperty("Content-Type", "multipart/form-data; boundary=" + boundary);
+                            conn.setDoOutput(true);
+                            try (OutputStream out = conn.getOutputStream();
+                                 PrintWriter writer = new PrintWriter(new OutputStreamWriter(out, "UTF-8"), true);
+                                 FileInputStream fis = new FileInputStream(file)) {
+                                writer.println("--" + boundary);
+                                writer.println("Content-Disposition: form-data; name=\"photo\"; filename=\"" + file.getName() + "\"");
+                                writer.println("Content-Type: image/jpeg");
+                                writer.println();
+                                writer.flush();
+                                byte[] buffer = new byte[4096];
+                                int read;
+                                while ((read = fis.read(buffer)) != -1) out.write(buffer, 0, read);
+                                out.flush();
+                                writer.println();
+                                writer.println("--" + boundary + "--");
                             }
-
-                        } catch (Exception e) {
-                            e.printStackTrace(System.err);
-                        }
+                        } catch (Exception e) { e.printStackTrace(); }
                     })
                     .setBody("");
-
-            String obj = requestBuilder.build().execute();
-            JsonObject object = new JsonParser().parse(obj).getAsJsonObject();
-
-            if (!object.get("ok").getAsBoolean()) {
-                MutableText mutableText = new LiteralText("")
-                        .append(new LiteralText("Ошибка при отправке сообщение в телеграм!").formatted(Formatting.RED))
-                        .append(" ")
-                        .append(new LiteralText(object.get("description").getAsString()).formatted(Formatting.YELLOW));
-
-                System.out.println(mutableText.getString());
-                ChatUtility.sendMessage(mutableText);
-            }
-        } catch (Exception ex) {
-            ex.printStackTrace(System.err);
-        }
+            builder.build().execute();
+        } catch (Exception e) { e.printStackTrace(); }
     }
 
     private static JsonArray pollMessage() {
         try {
-            HttpUtil.RequestBuilder requestBuilder = new HttpUtil.RequestBuilder()
-                    .setUrl(getURL() + "/getUpdates")
-                    .setMethod("POST")
-                    .setBody(String.format("{\"offset\": %s, \"timeout\": 1, \"allowed_updates\": [\"message\"]}", lastOffset));
-
-            JsonObject object = new JsonParser().parse(requestBuilder.build().execute()).getAsJsonObject();
-
-            JsonArray filtered = new JsonArray();
-            JsonArray array = object.getAsJsonArray("result");
-
-            if (array == null) return filtered;
-
-            for (JsonElement element : array) {
-                JsonObject jsonObject = element.getAsJsonObject();
-                JsonObject message = jsonObject.get("message").getAsJsonObject();
-
-                if (message.getAsJsonObject().get("from").getAsJsonObject().get("id").getAsString().equalsIgnoreCase(chatId) && !message.get("from").getAsJsonObject().get("is_bot").getAsBoolean()) {
-                    filtered.add(jsonObject);
-                }
+            String url = getURL() + "/getUpdates?offset=" + lastOffset + "&timeout=1";
+            String response = new HttpUtil.RequestBuilder().setUrl(url).setMethod("GET").build().execute();
+            JsonObject obj = new JsonParser().parse(response).getAsJsonObject();
+            if (obj.has("ok") && obj.get("ok").getAsBoolean()) {
+                return obj.getAsJsonArray("result");
             }
-
-            return filtered;
         } catch (Exception e) {
-            e.printStackTrace(System.err);
+            e.printStackTrace();
         }
-
         return new JsonArray();
     }
-
-    public static void main(String[] args) {
-        start();
-    }
-
 }

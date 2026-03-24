@@ -8,7 +8,7 @@ import net.minecraft.util.Formatting;
 import ru.nedan.neverapi.NeverAPI;
 import ru.nedan.neverapi.etc.ChatUtility;
 import ru.nedan.neverapi.etc.TextBuilder;
-import ru.nedan.spookybuy.items.ItemStorage;
+import ru.nedan.spookybuy.items.ItemStorag;
 import ru.nedan.spookybuy.util.Pair;
 import ru.nedan.spookybuy.SpookyBuy;
 import ru.nedan.spookybuy.util.Utils;
@@ -41,7 +41,7 @@ public class AutoParser {
     public boolean tick() {
         if (SpookyBuy.getInstance().isAutoSetupState()) {
             AutoBuy autoBuy = SpookyBuy.getInstance().getAutoBuy();
-            CollectItem collectItem = ItemStorage.ALL
+            CollectItem collectItem = ItemStorag.ALL
                     .stream()
                     .filter(item -> !added.contains(item) && autoBuy.getPriceMap().getAutoSetupFlag(item))
                     .findFirst()
