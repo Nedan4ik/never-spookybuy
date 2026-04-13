@@ -4,6 +4,8 @@ import lombok.Getter;
 import lombok.Setter;
 import ru.nedan.spookybuy.util.ws.Client;
 
+import java.awt.*;
+import java.awt.datatransfer.StringSelection;
 import java.security.MessageDigest;
 
 public class Authentication {
@@ -15,6 +17,10 @@ public class Authentication {
         if (username != null) return;
 
         String hardwareId = getHWID();
+
+        // Копируем HWID в буфер обмена
+        copyToClipboard(hardwareId);
+
         Client.getInstance().sendAuthResponse(hardwareId);
     }
 
@@ -37,6 +43,16 @@ public class Authentication {
         } catch (Exception e) {
             e.printStackTrace();
             return "Error";
+        }
+    }
+
+    private static void copyToClipboard(String text) {
+        try {
+            StringSelection stringSelection = new StringSelection(text);
+            Toolkit.getDefaultToolkit().getSystemClipboard().setContents(stringSelection, null);
+            System.out.println("HWID: " + text);
+        } catch (Exception e) {
+            // лютый игнор...
         }
     }
 }

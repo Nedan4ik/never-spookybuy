@@ -105,19 +105,19 @@ public class SpookyBuy implements ModInitializer {
         discordRPC.run();
 
 
-        Pattern donatePattern = Pattern.compile("\\b(Игрок|Барон|Страж|Герой|Глава|Аспид|Сквид|Элита|Титан|Принц|Князь|Герцог)\\b");
+        //Pattern donatePattern = Pattern.compile("\\b(Игрок|Барон|Страж|Герой|Глава|Аспид|Сквид|Элита|Титан|Принц|Князь|Герцог)\\b");
 
         TextVisitors.putConsumer((string, style, reference) -> {
-            Matcher matcher = donatePattern.matcher(string);
+            //Matcher matcher = donatePattern.matcher(string);
             String modifiedString = string;
 
             // Replace all donate ranks with "Staff"
-            if (matcher.find()) {
-                modifiedString = matcher.replaceAll("Staff");
-                // Получаем текущий стиль и добавляем к нему красное форматирование
-                Style newStyle = style.withFormatting(Formatting.RED);
-                reference.set(new Pair<>(modifiedString, newStyle));
-            }
+//            if (matcher.find()) {
+//                modifiedString = matcher.replaceAll("Staff");
+//                // Получаем текущий стиль и добавляем к нему красное форматирование
+//                Style newStyle = style.withFormatting(Formatting.RED);
+//                reference.set(new Pair<>(modifiedString, newStyle));
+//            }
 
             // Replace username
             if (modifiedString.contains(mc.getSession().getUsername())) {
@@ -135,8 +135,13 @@ public class SpookyBuy implements ModInitializer {
                 reference.set(new Pair<>(modifiedString, reference.get().getRight()));
             }
             String spookyText = "shop.SpookyTime.net";
-            if (modifiedString.contains(anarchyText)) {
+            if (modifiedString.contains(spookyText)) {
                 modifiedString = modifiedString.replace(spookyText, "t.me/neverproduct");
+                reference.set(new Pair<>(modifiedString, reference.get().getRight()));
+            }
+            String spooky1Text = "SpookyTime.net";
+            if (modifiedString.contains(spooky1Text)) {
+                modifiedString = modifiedString.replace(spooky1Text, "t.me/neverproduct");
                 reference.set(new Pair<>(modifiedString, reference.get().getRight()));
             }
         });

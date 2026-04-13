@@ -5,6 +5,8 @@ import ru.nedan.neverapi.etc.discord.DiscordEventHandlers;
 import ru.nedan.neverapi.etc.discord.DiscordRPC;
 import ru.nedan.neverapi.etc.discord.DiscordRichPresence;
 import ru.nedan.spookybuy.SpookyBuy;
+import ru.nedan.neverapi.etc.discord.helpers.RPCButton;
+
 
 import java.math.BigDecimal;
 
@@ -12,13 +14,19 @@ public class Discord {
     public boolean running;
     private final DiscordRichPresence.Builder discordRichPresence = new DiscordRichPresence.Builder();
 
+
+
     public void run() {
         running = true;
 
+        RPCButton button = RPCButton.create("Дискорд", "https://dsc.gg/nvrbuy");
+        RPCButton button2 = RPCButton.create("Телеграм", "https://t.me/neverproduct");
         discordRichPresence
                 .setStartTimestamp(System.currentTimeMillis() / 1000)
-                .setLargeImage("https://i.ibb.co.com/354LrBrV/image.webp")
-                .setState("Version: " + getModVersion());
+                .setSmallImage("https://iili.io/B1aw1V4.png", "dsc.gg/nvrbuy")
+                .setLargeImage("https://iili.io/Bw6ToNf.jpg", "dsc.gg/nvrbuy")
+                .setState("Version: " + getModVersion())
+                .setButtons(button, button2);
 
         DiscordEventHandlers eventHandlers = new DiscordEventHandlers.Builder()
                 .build();

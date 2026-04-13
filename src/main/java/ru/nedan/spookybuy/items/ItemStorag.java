@@ -15,11 +15,12 @@ import java.util.Arrays;
 import java.util.List;
 
 import static net.minecraft.enchantment.Enchantments.*;
-import static net.minecraft.entity.attribute.EntityAttributeModifier.Operation.*;
+import static net.minecraft.entity.attribute.EntityAttributeModifier.Operation.ADDITION;
+import static net.minecraft.entity.attribute.EntityAttributeModifier.Operation.MULTIPLY_BASE;
 import static net.minecraft.entity.attribute.EntityAttributes.*;
 import static net.minecraft.entity.effect.StatusEffects.*;
 import static net.minecraft.item.Items.*;
-
+//asdasasdasd
 public class ItemStorag {
     public static final List<CollectItem> ALL = new ArrayList<>();
     private static final List<EnchantmentData> DEFAULT_FOR_ARMOR;
@@ -33,6 +34,7 @@ public class ItemStorag {
                 EnchantmentData.of(MENDING, 1),
                 EnchantmentData.of(FIRE_PROTECTION, 5)
         );
+
 
         reload();
     }
@@ -141,7 +143,7 @@ public class ItemStorag {
                         .setItem(ENCHANTED_BOOK)
                         .addEnchantments(EnchantmentData.of(MENDING, 1)),
                 new CollectItem()
-                        .setName("Элитры")
+                        .setName("Элитры Крушителя")
                         .setItem(ELYTRA)
                         .addEnchantments(
                                 EnchantmentData.of(UNBREAKING, 5),
@@ -208,7 +210,7 @@ public class ItemStorag {
                         EffectData.of(STRENGTH, 30, 4), EffectData.of(SLOWNESS, 30, 3))
                         .setName("Зелье гнева"),
                 new PotionItem(true, 65535,
-                        EffectData.of(RESISTANCE, 600, 0), EffectData.of(FIRE_RESISTANCE, 600, 0), EffectData.of(HEALTH_BOOST, 60, 2), EffectData.of(INVISIBILITY, 900, 2))
+                        EffectData.of(RESISTANCE, 600, 0), EffectData.of(FIRE_RESISTANCE, 600, 0), EffectData.of(HEALTH_BOOST, 60, 2), EffectData.of(INVISIBILITY, 900, 0))
                         .setName("Зелье палладина"),
                 new PotionItem(true, 3355443,
                         EffectData.of(STRENGTH, 60, 3), EffectData.of(SPEED, 300, 2), EffectData.of(HASTE, 60, 0), EffectData.instant(INSTANT_DAMAGE, 1))
@@ -258,7 +260,26 @@ public class ItemStorag {
                 new TalismanItem(AttributeData.of(GENERIC_MAX_HEALTH, 1.5, ADDITION), AttributeData.of(GENERIC_ARMOR, 1.5, ADDITION))
                         .setName("Талисман Мрака"),
                 new TalismanItem(AttributeData.of(GENERIC_ATTACK_SPEED, 0.1, MULTIPLY_BASE), AttributeData.of(GENERIC_ATTACK_DAMAGE, 2.5, ADDITION))
-                        .setName("Талисман Демона")
+                        .setName("Талисман Демона"),
+                new CollectItem()
+                        .setName("Незеритовый слиток")
+                        .setItem(NETHERITE_INGOT),
+                new CollectItem()
+                        .setName("Изумрудная руда")
+                        .setItem(EMERALD_ORE),
+                new CollectItem()
+                        .setName("Снежок заморозка")
+                        .setItem(SNOWBALL)
+                        .setTag("effect-item-snowball"),
+                new CollectItem()
+                        .setName("Чанкер 1x1")
+                        .setItem(STRUCTURE_BLOCK)
+                        .setTag("executable-block-chunker-1"),
+                new CollectItem()
+                        .setName("Дамагер")
+                        .setItem(JIGSAW)
+                        .setTag("executable-block-damager")
+
         ));
     }
 

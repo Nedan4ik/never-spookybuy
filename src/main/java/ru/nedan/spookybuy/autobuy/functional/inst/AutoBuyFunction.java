@@ -77,7 +77,7 @@ public class AutoBuyFunction implements ABTicker, ABMessageListener, ABInputList
     // Переменные для рандомизации update задержки
     private final Random random = new Random();
     private static final int UPDATE_MIN_DELAY = 300; // минимальная задержка 250 мс
-    private static final int UPDATE_MAX_DELAY = 305; // максимальная задержка 450 мс
+    private static final int UPDATE_MAX_DELAY = 301; // максимальная задержка 450 мс
     private int currentUpdateDelay = UPDATE_MIN_DELAY;
 
     // Таймер для проверки gray_dye
@@ -171,7 +171,7 @@ public class AutoBuyFunction implements ABTicker, ABMessageListener, ABInputList
             }
 
             TimerUtility buyTimer = timers.get("ab.buy");
-            if (!buyTimer.hasPasses(25)) return;
+            if (!buyTimer.hasPasses(450)) return;
 
             for (Slot slot : screenHandler.slots) {
                 ItemStack stack = slot.getStack();
@@ -225,7 +225,7 @@ public class AutoBuyFunction implements ABTicker, ABMessageListener, ABInputList
 
             if (!flags.get("autoSell")) return;
 
-            if (timers.get("autosell.sell").hasPasses(500)) {
+            if (timers.get("autosell.sell").hasPasses(800)) {
                 for (int i = 0; i <= 36; ++i) {
                     if (i == 36) {
                         flags.replace("autoSell", false);
