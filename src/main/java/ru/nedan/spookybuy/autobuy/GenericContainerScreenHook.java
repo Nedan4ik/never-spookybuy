@@ -4,7 +4,6 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ingame.GenericContainerScreen;
 import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtList;
@@ -12,7 +11,10 @@ import net.minecraft.nbt.NbtString;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.text.LiteralText;
 import net.minecraft.util.ChatUtil;
+import net.minecraft.util.Formatting;
 import ru.nedan.neverapi.NeverAPI;
+import ru.nedan.neverapi.etc.ChatUtility;
+import ru.nedan.neverapi.etc.TextBuilder;
 import ru.nedan.neverapi.gui.Button;
 import ru.nedan.neverapi.math.FloatRectangle;
 import ru.nedan.neverapi.math.TimerUtility;
@@ -22,6 +24,7 @@ import ru.nedan.neverapi.shader.Rounds;
 import ru.nedan.spookybuy.SpookyBuy;
 import ru.nedan.spookybuy.util.Utils;
 import ru.nedan.spookybuy.autobuy.history.HistoryManager;
+import ru.nedan.spookybuy.autobuy.history.SalesHistoryManager;
 import ru.nedan.spookybuy.items.CollectItem;
 
 import java.awt.*;
@@ -29,9 +32,11 @@ import java.text.NumberFormat;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.ArrayList;
 
 public class GenericContainerScreenHook extends GenericContainerScreen {
     private static final MinecraftClient mc = MinecraftClient.getInstance();
+    private static final NumberFormat NUMBER_FORMAT = NumberFormat.getInstance(Locale.US);
 
     public GenericContainerScreenHook(GenericContainerScreen old) {
         super(old.getScreenHandler(), mc.player.inventory, old.getTitle());
@@ -40,48 +45,80 @@ public class GenericContainerScreenHook extends GenericContainerScreen {
     private final TimerUtility afterInit = new TimerUtility();
     public Slot minPrice;
     private Button button = null;
+    private Button salesClearButton = null;
+    private int currentMinPrice = -1;
+    private boolean slotsProcessed = false;
+    private List<Slot> problematicSlots = new ArrayList<>();
+    private int tickCounter = 0;
+    private int initTickCounter = 0;
+    private SalesHistoryManager salesHistory;
 
     @Override
     public void init(MinecraftClient client, int width, int height) {
         super.init(client, width, height);
-
+        slotsProcessed = false;
+        minPrice = null;
+        problematicSlots.clear();
+        initTickCounter = 0;
+        salesHistory = SalesHistoryManager.getInstance();
     }
 
     public static void fill(List<Slot> slots) {
         for (Slot slot : slots) {
             ItemStack stack = slot.getStack();
 
-            if (stack.isEmpty() || stack.getCount() == 1 || Utils.getPrice(stack) == -1) continue;
+            if (stack.isEmpty() || Utils.getPrice(stack) == -1) continue;
 
             NbtCompound compound = stack.getOrCreateTag();
             NbtCompound display = compound.getCompound("display");
             NbtList lore = display.contains("Lore", 9) ? display.getList("Lore", 8) : new NbtList();
 
-            boolean next = true;
+            boolean hasPricePerUnit = false;
+            int pricePerUnitIndex = -1;
 
             for (int i = 0; i < lore.size(); i++) {
                 String line = lore.getString(i);
-
                 if (line.contains("Цена за 1 шт.")) {
-                    next = false;
+                    hasPricePerUnit = true;
+                    pricePerUnitIndex = i;
+                    break;
                 }
             }
 
-            if (!next) continue;
-
-            NumberFormat numberFormat = NumberFormat.getInstance(Locale.US);
+            int totalPrice = Utils.getPrice(stack);
+            int pricePerUnit = totalPrice / stack.getCount();
 
             String priceText = "[\"\",{\"italic\":false,\"color\":\"green\",\"text\":\"$\"}," +
                     "{\"italic\":false,\"color\":\"white\",\"text\":\" Цена за 1 шт.: \"}," +
-                    "{\"italic\":false,\"color\":\"green\",\"text\":\"$" + numberFormat.format(Utils.getPrice(stack) / stack.getCount()) + "\"}]";
+                    "{\"italic\":false,\"color\":\"green\",\"text\":\"$" + NUMBER_FORMAT.format(pricePerUnit) + "\"}]";
+
+            if (hasPricePerUnit) {
+                String currentPriceLine = lore.getString(pricePerUnitIndex);
+                if (!currentPriceLine.contains("$" + NUMBER_FORMAT.format(pricePerUnit))) {
+                    lore.set(pricePerUnitIndex, NbtString.of(priceText));
+                }
+                continue;
+            }
 
             boolean inserted = false;
+
             for (int i = 0; i < lore.size(); i++) {
                 String line = ChatUtil.stripTextFormat(lore.getString(i));
-                if (line.contains("Цена: ")) {
+                if (line.contains("Цена:")) {
                     lore.add(i + 1, NbtString.of(priceText));
                     inserted = true;
                     break;
+                }
+            }
+
+            if (!inserted) {
+                for (int i = 0; i < lore.size(); i++) {
+                    String line = ChatUtil.stripTextFormat(lore.getString(i));
+                    if (line.contains("Продавец:") || line.contains("Seller:")) {
+                        lore.add(i + 1, NbtString.of(priceText));
+                        inserted = true;
+                        break;
+                    }
                 }
             }
 
@@ -95,39 +132,147 @@ public class GenericContainerScreenHook extends GenericContainerScreen {
         }
     }
 
+    private void forceProcessSlot(Slot slot) {
+        if (slot == null || slot.getStack().isEmpty()) return;
+
+        ItemStack stack = slot.getStack();
+        if (Utils.getPrice(stack) == -1) return;
+
+        NbtCompound compound = stack.getOrCreateTag();
+        NbtCompound display = compound.getCompound("display");
+        NbtList lore = display.contains("Lore", 9) ? display.getList("Lore", 8) : new NbtList();
+
+        for (int i = lore.size() - 1; i >= 0; i--) {
+            String line = lore.getString(i);
+            if (line.contains("Цена за 1 шт.")) {
+                lore.remove(i);
+            }
+        }
+
+        int totalPrice = Utils.getPrice(stack);
+        int pricePerUnit = totalPrice / stack.getCount();
+
+        String priceText = "[\"\",{\"italic\":false,\"color\":\"green\",\"text\":\"$\"}," +
+                "{\"italic\":false,\"color\":\"white\",\"text\":\" Цена за 1 шт.: \"}," +
+                "{\"italic\":false,\"color\":\"green\",\"text\":\"$" + NUMBER_FORMAT.format(pricePerUnit) + "\"}]";
+
+        boolean inserted = false;
+
+        for (int i = 0; i < lore.size(); i++) {
+            String line = ChatUtil.stripTextFormat(lore.getString(i));
+            if (line.contains("Цена:")) {
+                lore.add(i + 1, NbtString.of(priceText));
+                inserted = true;
+                break;
+            }
+        }
+
+        if (!inserted) {
+            lore.add(NbtString.of(priceText));
+        }
+
+        display.put("Lore", lore);
+        compound.put("display", display);
+        stack.setTag(compound);
+    }
+
     @Override
     @SuppressWarnings("deprecation")
     public void render(MatrixStack matrices, int mouseX, int mouseY, float delta) {
         HistoryManager historyManager = HistoryManager.getInstance();
-        super.render(matrices, mouseX, mouseY, delta);
+        SalesHistoryManager salesHistory = SalesHistoryManager.getInstance();
 
-        fill(handler.slots);
-
-        if (button == null) {
-            button = new Button(new LiteralText("Очистить"), new FloatRectangle(this.x - 150, this.y + this.backgroundHeight + 4, 145, 18), (btn) -> {
-                historyManager.clear();
-            }, Collections.singletonList(new LiteralText("Нажмите чтобы очистить историю")));
+        // ========== 1. Обработка слотов ==========
+        if (!slotsProcessed) {
+            fill(handler.slots);
+            slotsProcessed = true;
         }
 
-        if (this.title.getString().contains("Поиск") || this.title.getString().contains("Аукционы") || this.title.getString().contains("П:")) {
-            if (afterInit.hasPasses(50)) {
-                if (minPrice == null) minPrice = calculateMinPriceSlot();
-            }
-        }
+        for (Slot slot : handler.slots) {
+            ItemStack stack = slot.getStack();
+            if (stack.isEmpty() || Utils.getPrice(stack) == -1) continue;
 
-        if (NeverAPI.isDevBuild()) {
-            if (focusedSlot != null) {
-                ItemStack stack = focusedSlot.getStack();
-                CollectItem collectItem = SpookyBuy.getInstance().getAutoBuy().getItem(stack);
+            NbtCompound compound = stack.getTag();
+            if (compound != null && compound.contains("display")) {
+                NbtCompound display = compound.getCompound("display");
+                if (display.contains("Lore", 9)) {
+                    NbtList lore = display.getList("Lore", 8);
+                    boolean hasPricePerUnit = false;
 
-                if (collectItem != null) {
-                    System.out.println(collectItem.getName());
-                } else {
-                    System.out.println(stack.getAttributeModifiers(EquipmentSlot.OFFHAND).entries());
+                    for (int i = 0; i < lore.size(); i++) {
+                        if (lore.getString(i).contains("Цена за 1 шт.")) {
+                            hasPricePerUnit = true;
+                            break;
+                        }
+                    }
+
+                    if (!hasPricePerUnit && !problematicSlots.contains(slot)) {
+                        problematicSlots.add(slot);
+                    }
                 }
             }
         }
 
+        if (!problematicSlots.isEmpty()) {
+            for (Slot slot : problematicSlots) {
+                forceProcessSlot(slot);
+            }
+            problematicSlots.clear();
+        }
+
+        // ========== 2. Стандартный рендер (включая слоты и итемы) ==========
+        super.render(matrices, mouseX, mouseY, delta);
+
+        // ========== 3. Рендер панелей истории ПОВЕРХ слотов ==========
+        float leftX = this.x - 150;
+        float leftWidth = 145;
+        float rightX = this.x + this.backgroundWidth + 5;
+        float rightWidth = 145;
+
+        // Логика минимальной цены
+        if (this.getTitle().getString().contains("Поиск") || this.getTitle().getString().contains("П:") || this.getTitle().getString().contains("Аукционы")) {
+            initTickCounter++;
+            if (initTickCounter >= 50 || minPrice == null) {
+                if (minPrice == null) {
+                    minPrice = calculateMinPriceSlot();
+                    if (minPrice != null) {
+                        ItemStack stack = minPrice.getStack();
+                        currentMinPrice = Utils.getPrice(stack) / stack.getCount();
+                    }
+                }
+            }
+        }
+
+        if (button == null) {
+            button = new Button(new LiteralText("Очистить"), new FloatRectangle(leftX, this.y + this.backgroundHeight + 4, leftWidth, 18), (btn) -> {
+                historyManager.clear();
+            }, Collections.singletonList(new LiteralText("Нажмите чтобы очистить историю покупок")));
+        }
+
+        if (salesClearButton == null) {
+            salesClearButton = new Button(new LiteralText("Очистить"), new FloatRectangle(rightX, this.y + this.backgroundHeight + 4, rightWidth, 18), (btn) -> {
+                salesHistory.clear();
+            }, Collections.singletonList(new LiteralText("Нажмите чтобы очистить историю продаж")));
+        }
+
+        if (this.getTitle().getString().contains("Поиск") || this.getTitle().getString().contains("Аукционы")) {
+            tickCounter++;
+            if (tickCounter % 50 == 0 || minPrice == null) {
+                Slot newMinPrice = calculateMinPriceSlot();
+
+                if (newMinPrice != null) {
+                    forceProcessSlot(newMinPrice);
+
+                    if (minPrice == null || !minPrice.equals(newMinPrice)) {
+                        minPrice = newMinPrice;
+                        ItemStack stack = minPrice.getStack();
+                        currentMinPrice = Utils.getPrice(stack) / stack.getCount();
+                    }
+                }
+            }
+        }
+
+        // Подсветка минимальной цены
         if (minPrice != null) {
             int i = this.x;
             int j = this.y;
@@ -154,20 +299,83 @@ public class GenericContainerScreenHook extends GenericContainerScreen {
             RenderSystem.popMatrix();
         }
 
-        float offset = this.y + 16;
-        float x = this.x - 148;
+        // Блюр и панели
+        float leftPanelX = this.x - 150;
+        float leftPanelY = this.y + 16;
 
         Blur.register(() -> {
-            Rounds.drawRound(this.x - 150, this.y, 145, this.backgroundHeight, 6, Color.BLACK);
+            Rounds.drawRound(leftPanelX, this.y, 145, this.backgroundHeight, 6, Color.BLACK);
+        });
+
+        Blur.register(() -> {
+            Rounds.drawRound(rightX, this.y, rightWidth, this.backgroundHeight, 6, Color.BLACK);
         });
 
         Blur.draw(8, ColorUtility.getColorComps(new Color(0x717171)));
 
-        String text = "История покупок";
+        String purchaseText = "История покупок";
+        String salesText = "История продаж";
 
-        mc.textRenderer.draw(matrices, text, x + (145 - mc.textRenderer.getWidth(text)) / 2f, y + 3, -1);
+        mc.textRenderer.draw(matrices, purchaseText, leftPanelX + (145 - mc.textRenderer.getWidth(purchaseText)) / 2f, this.y + 3, -1);
+        mc.textRenderer.draw(matrices, salesText, rightX + (rightWidth - mc.textRenderer.getWidth(salesText)) / 2f, this.y + 3, -1);
+
         button.render(matrices);
-        historyManager.render(matrices, x, offset, 145, this.backgroundHeight);
+        salesClearButton.render(matrices);
+
+        historyManager.render(matrices, leftPanelX, leftPanelY, 145, this.backgroundHeight);
+        salesHistory.render(matrices, rightX, this.y + 16, rightWidth, this.backgroundHeight);
+
+        // Информация о цене
+        if (minPrice != null && currentMinPrice > 0) {
+            String priceInfo = "§7Самая низкая: §a$" + NUMBER_FORMAT.format(currentMinPrice);
+            mc.textRenderer.draw(
+                    matrices,
+                    priceInfo,
+                    this.x + this.backgroundWidth + 4,
+                    this.y - 40,
+                    -1
+            );
+
+            String deductionInfo;
+            if (currentMinPrice < 800000) {
+                int calculatedBuyPrice = currentMinPrice / 2;
+                if (calculatedBuyPrice < 1000) calculatedBuyPrice = 1000;
+                int buyDeduction = currentMinPrice - calculatedBuyPrice;
+                deductionInfo = "§7Вычет покупки: §c-" + NUMBER_FORMAT.format(buyDeduction);
+            } else if (currentMinPrice >= 7000000) {
+                deductionInfo = "§7Вычет покупки: §c-3M";
+            } else if (currentMinPrice >= 30000000) {
+                deductionInfo = "§7Вычет покупки: §c-5M";
+            } else {
+                deductionInfo = "§7Вычет покупки: §c-500k";
+            }
+            mc.textRenderer.draw(
+                    matrices,
+                    deductionInfo,
+                    this.x + this.backgroundWidth + 4,
+                    this.y - 28,
+                    -1
+            );
+
+            int sellPriceDisplay = currentMinPrice - 1;
+            if (sellPriceDisplay < 1000) sellPriceDisplay = 1000;
+            String sellInfo = "§7Продажа: §a$" + NUMBER_FORMAT.format(sellPriceDisplay) + " §8( -1 от цены)";
+            mc.textRenderer.draw(
+                    matrices,
+                    sellInfo,
+                    this.x + this.backgroundWidth + 4,
+                    this.y - 16,
+                    -1
+            );
+        }
+
+        // ========== 4. Тултип рендерится ПОВЕРХ всего ==========
+        if (this.focusedSlot != null && !this.focusedSlot.getStack().isEmpty()) {
+            RenderSystem.disableDepthTest();
+            List<net.minecraft.text.Text> tooltip = this.getTooltipFromItem(this.focusedSlot.getStack());
+            this.renderTooltip(matrices, tooltip, mouseX, mouseY);
+            RenderSystem.enableDepthTest();
+        }
     }
 
     @Override
@@ -207,12 +415,26 @@ public class GenericContainerScreenHook extends GenericContainerScreen {
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         this.button.mouseClicked(mouseX, mouseY, button);
+        if (this.salesClearButton != null) {
+            this.salesClearButton.mouseClicked(mouseX, mouseY, button);
+        }
         return super.mouseClicked(mouseX, mouseY, button);
     }
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double amount) {
-        HistoryManager.getInstance().scroll += (float) (amount * 16);
+        float leftX = this.x - 150;
+        float rightX = this.x + this.backgroundWidth + 5;
+        float panelWidth = 145;
+
+        if (mouseX >= leftX && mouseX <= leftX + panelWidth &&
+                mouseY >= this.y && mouseY <= this.y + this.backgroundHeight) {
+            HistoryManager.getInstance().scroll += (float) (amount * 16);
+        }
+        else if (mouseX >= rightX && mouseX <= rightX + panelWidth &&
+                mouseY >= this.y && mouseY <= this.y + this.backgroundHeight) {
+            SalesHistoryManager.getInstance().scroll += (float) (amount * 16);
+        }
 
         return super.mouseScrolled(mouseX, mouseY, amount);
     }

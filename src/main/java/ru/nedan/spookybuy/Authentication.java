@@ -14,7 +14,7 @@ public class Authentication {
     private static String username;
 
     public static void auth() {
-        if (username != null) return;
+        if (username != "unknown") return;
 
         String hardwareId = getHWID();
 

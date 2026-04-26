@@ -9,6 +9,8 @@ import net.minecraft.network.packet.c2s.play.ClickSlotC2SPacket;
 import net.minecraft.network.packet.c2s.play.UpdateSelectedSlotC2SPacket;
 import net.minecraft.screen.GenericContainerScreenHandler;
 import net.minecraft.screen.slot.Slot;
+import ru.nedan.spookybuy.autobuy.history.SalesHistoryManager;
+
 import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.util.ChatUtil;
 import net.minecraft.util.Formatting;
@@ -73,16 +75,20 @@ public class AutoBuyFunction implements ABTicker, ABMessageListener, ABInputList
     private final Pattern sellPattern = Pattern.compile("^\\[☃] У Вас купили (.+) за \\$([\\d,]+) на /ah$");
     private final Pattern buyPattern = Pattern.compile("^\\[☃] Вы успешно купили (.+) за \\$([\\d,]+)!$");
 
-
     // Переменные для рандомизации update задержки
     private final Random random = new Random();
-    private static final int UPDATE_MIN_DELAY = 300; // минимальная задержка 250 мс
-    private static final int UPDATE_MAX_DELAY = 301; // максимальная задержка 450 мс
+    private static final int UPDATE_MIN_DELAY = 300;
+    private static final int UPDATE_MAX_DELAY = 300;
     private int currentUpdateDelay = UPDATE_MIN_DELAY;
 
     // Таймер для проверки gray_dye
     private final TimerUtility menuUpdateTimer = new TimerUtility();
     private String lastMenuContent = "";
+
+    /**
+     * Метод для покупки шалкера
+     */
+
 
     @Override
     public void tick(EventPlayerTick e) {
@@ -92,8 +98,6 @@ public class AutoBuyFunction implements ABTicker, ABMessageListener, ABInputList
 
         assert mc.interactionManager != null;
         assert mc.player != null;
-
-
 
         if (mc.currentScreen instanceof GenericContainerScreen screen) {
             GenericContainerScreenHandler screenHandler = screen.getScreenHandler();
@@ -105,13 +109,11 @@ public class AutoBuyFunction implements ABTicker, ABMessageListener, ABInputList
                 menuUpdateTimer.updateLast();
             }
 
-            if (menuUpdateTimer.hasPasses(8000)) {
-
+            if (menuUpdateTimer.hasPasses(5000)) {
                 mc.player.closeHandledScreen();
                 menuUpdateTimer.updateLast();
                 return;
             }
-
 
             if (flags.get("resell")) {
                 if (timers.get("ab.resellItem").hasPasses(400)) {
@@ -153,8 +155,6 @@ public class AutoBuyFunction implements ABTicker, ABMessageListener, ABInputList
             if (timers.get("ab.update").hasPasses(currentUpdateDelay)) {
                 clickSilent(sId, 49);
                 timers.get("ab.update").updateLast();
-
-                // Генерируем новую случайную задержку для следующего раза
                 randomizeUpdateDelay();
             }
 
@@ -173,10 +173,20 @@ public class AutoBuyFunction implements ABTicker, ABMessageListener, ABInputList
             TimerUtility buyTimer = timers.get("ab.buy");
             if (!buyTimer.hasPasses(450)) return;
 
+            // СНАЧАЛА проверяем шалкеры
+            for (Slot slot : screenHandler.slots) {
+                ItemStack stack = slot.getStack();
+                if (stack.isEmpty()) continue;
+
+
+            }
+
+            // ЗАТЕМ проверяем обычные предметы
             for (Slot slot : screenHandler.slots) {
                 ItemStack stack = slot.getStack();
 
                 if (stack.isEmpty()) continue;
+
 
                 int totalPrice = Utils.getPrice(stack);
                 if (totalPrice <= 0) continue;
@@ -276,14 +286,9 @@ public class AutoBuyFunction implements ABTicker, ABMessageListener, ABInputList
 
     boolean rejoining;
 
-
-    /**
-     * Рандомизирует задержку для update между минимальным и максимальным значениями
-     */
     private void randomizeUpdateDelay() {
         currentUpdateDelay = UPDATE_MIN_DELAY + random.nextInt(UPDATE_MAX_DELAY - UPDATE_MIN_DELAY + 1);
     }
-
 
     @Override
     public void message(EventMessage e) {
@@ -322,6 +327,10 @@ public class AutoBuyFunction implements ABTicker, ABMessageListener, ABInputList
             if (sellMatcher.matches()) {
                 String item = sellMatcher.group(1);
                 String price = sellMatcher.group(2);
+
+                // Убираем запятые из строки цены для парсинга
+                double priceValue = Double.parseDouble(price.replaceAll(",", ""));
+                SalesHistoryManager.getInstance().addSale(item, priceValue);
 
                 if (sendSell)
                     TelegramAPI.sendMessage(String.format("У вас купили %s за $%s", item, price), null);
@@ -410,7 +419,6 @@ public class AutoBuyFunction implements ABTicker, ABMessageListener, ABInputList
             e.setSneaking(false);
         }
     }
-
 
     private void clickSilent(int containerId, int slot) {
         assert mc.player != null;
