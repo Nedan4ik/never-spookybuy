@@ -144,6 +144,36 @@ public class SpookyBuy implements ModInitializer {
                 modifiedString = modifiedString.replace(spooky1Text, "t.me/neverproduct");
                 reference.set(new Pair<>(modifiedString, reference.get().getRight()));
             }
+            String spooky2Text = "telegram.me/spookytimebot";
+            if (modifiedString.contains(spooky2Text)) {
+                modifiedString = modifiedString.replace(spooky2Text, "t.me/neverproduct");
+                reference.set(new Pair<>(modifiedString, reference.get().getRight()));
+            }
+            String spooky3Text = "discord.gg/spookytime";
+            if (modifiedString.contains(spooky3Text)) {
+                modifiedString = modifiedString.replace(spooky3Text, "dsc.gg/nvrbuy");
+                reference.set(new Pair<>(modifiedString, reference.get().getRight()));
+            }
+            String spooky4Text = "vk.com/kol_kola";
+            if (modifiedString.contains(spooky4Text)) {
+                modifiedString = modifiedString.replace(spooky4Text, "dsc.gg/nvrbuy");
+                reference.set(new Pair<>(modifiedString, reference.get().getRight()));
+            }
+            String spooky5Text = "/links";
+            if (modifiedString.contains(spooky5Text)) {
+                modifiedString = modifiedString.replace(spooky5Text, "dsc.gg/nvrbuy");
+                reference.set(new Pair<>(modifiedString, reference.get().getRight()));
+            }
+            String spooky6Text = "vk.com/spookytimenet";
+            if (modifiedString.contains(spooky6Text)) {
+                modifiedString = modifiedString.replace(spooky6Text, "dsc.gg/nvrbuy");
+                reference.set(new Pair<>(modifiedString, reference.get().getRight()));
+            }
+            String spooky7Text = "telegram.me/spookytimenet";
+            if (modifiedString.contains(spooky7Text)) {
+                modifiedString = modifiedString.replace(spooky7Text, "t.me/neverproduct");
+                reference.set(new Pair<>(modifiedString, reference.get().getRight()));
+            }
         });
 
         Event.addListener(EventWindowOpen.class, e -> {

@@ -11,10 +11,6 @@ import net.minecraft.nbt.NbtString;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.text.LiteralText;
 import net.minecraft.util.ChatUtil;
-import net.minecraft.util.Formatting;
-import ru.nedan.neverapi.NeverAPI;
-import ru.nedan.neverapi.etc.ChatUtility;
-import ru.nedan.neverapi.etc.TextBuilder;
 import ru.nedan.neverapi.gui.Button;
 import ru.nedan.neverapi.math.FloatRectangle;
 import ru.nedan.neverapi.math.TimerUtility;
@@ -22,17 +18,17 @@ import ru.nedan.neverapi.shader.Blur;
 import ru.nedan.neverapi.shader.ColorUtility;
 import ru.nedan.neverapi.shader.Rounds;
 import ru.nedan.spookybuy.SpookyBuy;
-import ru.nedan.spookybuy.util.Utils;
 import ru.nedan.spookybuy.autobuy.history.HistoryManager;
 import ru.nedan.spookybuy.autobuy.history.SalesHistoryManager;
 import ru.nedan.spookybuy.items.CollectItem;
+import ru.nedan.spookybuy.util.Utils;
 
 import java.awt.*;
 import java.text.NumberFormat;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
-import java.util.ArrayList;
 
 public class GenericContainerScreenHook extends GenericContainerScreen {
     private static final MinecraftClient mc = MinecraftClient.getInstance();
@@ -325,49 +321,7 @@ public class GenericContainerScreenHook extends GenericContainerScreen {
         historyManager.render(matrices, leftPanelX, leftPanelY, 145, this.backgroundHeight);
         salesHistory.render(matrices, rightX, this.y + 16, rightWidth, this.backgroundHeight);
 
-        // Информация о цене
-        if (minPrice != null && currentMinPrice > 0) {
-            String priceInfo = "§7Самая низкая: §a$" + NUMBER_FORMAT.format(currentMinPrice);
-            mc.textRenderer.draw(
-                    matrices,
-                    priceInfo,
-                    this.x + this.backgroundWidth + 4,
-                    this.y - 40,
-                    -1
-            );
 
-            String deductionInfo;
-            if (currentMinPrice < 800000) {
-                int calculatedBuyPrice = currentMinPrice / 2;
-                if (calculatedBuyPrice < 1000) calculatedBuyPrice = 1000;
-                int buyDeduction = currentMinPrice - calculatedBuyPrice;
-                deductionInfo = "§7Вычет покупки: §c-" + NUMBER_FORMAT.format(buyDeduction);
-            } else if (currentMinPrice >= 7000000) {
-                deductionInfo = "§7Вычет покупки: §c-3M";
-            } else if (currentMinPrice >= 30000000) {
-                deductionInfo = "§7Вычет покупки: §c-5M";
-            } else {
-                deductionInfo = "§7Вычет покупки: §c-500k";
-            }
-            mc.textRenderer.draw(
-                    matrices,
-                    deductionInfo,
-                    this.x + this.backgroundWidth + 4,
-                    this.y - 28,
-                    -1
-            );
-
-            int sellPriceDisplay = currentMinPrice - 1;
-            if (sellPriceDisplay < 1000) sellPriceDisplay = 1000;
-            String sellInfo = "§7Продажа: §a$" + NUMBER_FORMAT.format(sellPriceDisplay) + " §8( -1 от цены)";
-            mc.textRenderer.draw(
-                    matrices,
-                    sellInfo,
-                    this.x + this.backgroundWidth + 4,
-                    this.y - 16,
-                    -1
-            );
-        }
 
         // ========== 4. Тултип рендерится ПОВЕРХ всего ==========
         if (this.focusedSlot != null && !this.focusedSlot.getStack().isEmpty()) {

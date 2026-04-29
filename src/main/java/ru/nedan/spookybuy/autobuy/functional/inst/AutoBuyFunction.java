@@ -9,8 +9,6 @@ import net.minecraft.network.packet.c2s.play.ClickSlotC2SPacket;
 import net.minecraft.network.packet.c2s.play.UpdateSelectedSlotC2SPacket;
 import net.minecraft.screen.GenericContainerScreenHandler;
 import net.minecraft.screen.slot.Slot;
-import ru.nedan.spookybuy.autobuy.history.SalesHistoryManager;
-
 import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.util.ChatUtil;
 import net.minecraft.util.Formatting;
@@ -30,6 +28,7 @@ import ru.nedan.spookybuy.autobuy.functional.ABMessageListener;
 import ru.nedan.spookybuy.autobuy.functional.ABTicker;
 import ru.nedan.spookybuy.autobuy.history.HistoryItem;
 import ru.nedan.spookybuy.autobuy.history.HistoryManager;
+import ru.nedan.spookybuy.autobuy.history.SalesHistoryManager;
 import ru.nedan.spookybuy.event.EventPreSell;
 import ru.nedan.spookybuy.event.EventStartResell;
 import ru.nedan.spookybuy.event.EventStopResell;
@@ -40,7 +39,6 @@ import ru.nedan.spookybuy.util.telegram.TelegramAPI;
 
 import java.math.BigDecimal;
 import java.util.Map;
-import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.regex.Matcher;
@@ -75,20 +73,11 @@ public class AutoBuyFunction implements ABTicker, ABMessageListener, ABInputList
     private final Pattern sellPattern = Pattern.compile("^\\[☃] У Вас купили (.+) за \\$([\\d,]+) на /ah$");
     private final Pattern buyPattern = Pattern.compile("^\\[☃] Вы успешно купили (.+) за \\$([\\d,]+)!$");
 
-    // Переменные для рандомизации update задержки
-    private final Random random = new Random();
     private static final int UPDATE_MIN_DELAY = 300;
-    private static final int UPDATE_MAX_DELAY = 300;
     private int currentUpdateDelay = UPDATE_MIN_DELAY;
 
-    // Таймер для проверки gray_dye
     private final TimerUtility menuUpdateTimer = new TimerUtility();
     private String lastMenuContent = "";
-
-    /**
-     * Метод для покупки шалкера
-     */
-
 
     @Override
     public void tick(EventPlayerTick e) {
@@ -151,7 +140,6 @@ public class AutoBuyFunction implements ABTicker, ABMessageListener, ABInputList
                 }
             }
 
-            // Рандомизированная задержка для update
             if (timers.get("ab.update").hasPasses(currentUpdateDelay)) {
                 clickSilent(sId, 49);
                 timers.get("ab.update").updateLast();
@@ -171,22 +159,12 @@ public class AutoBuyFunction implements ABTicker, ABMessageListener, ABInputList
             }
 
             TimerUtility buyTimer = timers.get("ab.buy");
-            if (!buyTimer.hasPasses(450)) return;
+            if (!buyTimer.hasPasses(400)) return;
 
-            // СНАЧАЛА проверяем шалкеры
-            for (Slot slot : screenHandler.slots) {
-                ItemStack stack = slot.getStack();
-                if (stack.isEmpty()) continue;
-
-
-            }
-
-            // ЗАТЕМ проверяем обычные предметы
             for (Slot slot : screenHandler.slots) {
                 ItemStack stack = slot.getStack();
 
                 if (stack.isEmpty()) continue;
-
 
                 int totalPrice = Utils.getPrice(stack);
                 if (totalPrice <= 0) continue;
@@ -224,6 +202,9 @@ public class AutoBuyFunction implements ABTicker, ABMessageListener, ABInputList
                         SlotActionType.QUICK_MOVE,
                         mc.player
                 );
+
+
+
 
                 break;
             }
@@ -287,7 +268,7 @@ public class AutoBuyFunction implements ABTicker, ABMessageListener, ABInputList
     boolean rejoining;
 
     private void randomizeUpdateDelay() {
-        currentUpdateDelay = UPDATE_MIN_DELAY + random.nextInt(UPDATE_MAX_DELAY - UPDATE_MIN_DELAY + 1);
+        currentUpdateDelay = UPDATE_MIN_DELAY;
     }
 
     @Override
@@ -341,7 +322,7 @@ public class AutoBuyFunction implements ABTicker, ABMessageListener, ABInputList
 
             if (activeStack == null || activeCollect == null) return;
 
-            if (mes.equalsIgnoreCase("[☃] Этот товар уже купили!")) {
+            if (mes.equalsIgnoreCase("[✘] Ошибка! Этот товар уже Купили!")) {
                 if (sendBuy)
                     TelegramAPI.sendMessage(
                             String.format("Не удалось купить %s (%s) у игрока %s. Причина: Товар уже купили.",
@@ -354,10 +335,11 @@ public class AutoBuyFunction implements ABTicker, ABMessageListener, ABInputList
 
                 addHistoryItem(HistoryItem.Status.NOTBUY);
                 activeStack = null;
+                mc.player.closeHandledScreen();
                 return;
             }
-
-            if (mes.equalsIgnoreCase("[☃] У Вас не хватает денег!")) {
+            // привет с гитхаба 😊😊😀😃😘🤗😃🤣🤣😄😎🥱😶😐🤐😪🥱🤤🤑
+            if (mes.equalsIgnoreCase("[✘] Ошибка! У Вас не хватает Монет!")) {
                 if (sendBuy)
                     TelegramAPI.sendMessage(
                             String.format("Не удалось купить %s (%s) у игрока %s. Причина: У вас не хватает денег.",
