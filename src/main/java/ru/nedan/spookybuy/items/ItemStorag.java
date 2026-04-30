@@ -278,7 +278,23 @@ public class ItemStorag {
                 new CollectItem()
                         .setName("Дамагер")
                         .setItem(JIGSAW)
-                        .setTag("executable-block-damager")
+                        .setTag("executable-block-damager"),
+                new CollectItem()
+                        .setName("Модификатор варпов")
+                        .setItem(POPPED_CHORUS_FRUIT)
+                        .setTag("modifier-item-setwarp-day"),
+                new CollectItem()
+                        .setName("Модификатор полёта")
+                        .setItem(FEATHER)
+                        .setTag("modifier-item-fly-day"),
+                new CollectItem()
+                        .setName("Модификатор эндер-сундука")
+                        .setItem(ENDER_EYE)
+                        .setTag("modifier-item-ec-day"),
+                new CollectItem()
+                        .setName("Модификатор починки")
+                        .setItem(BUBBLE_CORAL)
+                        .setTag("modifier-item-fix-day")
 
         ));
     }
