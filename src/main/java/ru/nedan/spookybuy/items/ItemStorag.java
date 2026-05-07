@@ -246,9 +246,11 @@ public class ItemStorag {
                         AttributeData.of(GENERIC_LUCK, 1, ADDITION), AttributeData.of(GENERIC_MAX_HEALTH, 2, ADDITION))
                         .setName("Сфера Эрида"),
                 new TalismanItem(AttributeData.of(GENERIC_MAX_HEALTH, 4, ADDITION), AttributeData.of(GENERIC_ATTACK_DAMAGE, 3, ADDITION), AttributeData.of(GENERIC_ARMOR, 2, ADDITION), AttributeData.of(GENERIC_ARMOR_TOUGHNESS, 2, ADDITION))
-                        .setName("Талисман Крушителя"),
+                        .setName("Талисман Крушителя")
+                        .setMaxSellPrice(150000000),
                 new TalismanItem(AttributeData.of(GENERIC_MAX_HEALTH, -4, ADDITION), AttributeData.of(GENERIC_MOVEMENT_SPEED, 0.1, MULTIPLY_BASE), AttributeData.of(GENERIC_ATTACK_DAMAGE, 7, ADDITION))
-                        .setName("Талисман Карателя"),
+                        .setName("Талисман Карателя")
+                        .setMaxSellPrice(150000000),
                 new TalismanItem(AttributeData.of(GENERIC_MAX_HEALTH, 2, ADDITION), AttributeData.of(GENERIC_MOVEMENT_SPEED, 0.1, MULTIPLY_BASE), AttributeData.of(GENERIC_ATTACK_SPEED, 0.1, MULTIPLY_BASE), AttributeData.of(GENERIC_ATTACK_DAMAGE, 4, ADDITION), AttributeData.of(GENERIC_ARMOR, -3, ADDITION))
                         .setName("Талисман Раздора"),
                 new TalismanItem(AttributeData.of(GENERIC_MAX_HEALTH, -4, ADDITION), AttributeData.of(GENERIC_ATTACK_DAMAGE, 2, ADDITION), AttributeData.of(GENERIC_ARMOR, 2, ADDITION))

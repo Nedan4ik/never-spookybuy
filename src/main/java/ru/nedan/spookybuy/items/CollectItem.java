@@ -95,13 +95,15 @@ public class CollectItem {
         if (maxSellPrice == 10000000) {
             if (this.getItem() == Items.TOTEM_OF_UNDYING) return 50000000;
             if (this.getItem() == Items.PLAYER_HEAD) return 70000000;
-            if (this.getItem() == Items.CREEPER_SPAWN_EGG) return 300000000;
+            if (this.getItem() == Items.CREEPER_SPAWN_EGG) return 500000000;
             if (this.getItem() == Items.JIGSAW) return 25000000;
             if (this.getItem() == Items.STRUCTURE_BLOCK) return 25000000;
             if (this.getItem() == Items.ENDERMAN_SPAWN_EGG) return 50000000;
             if (this.getItem() == Items.STRAY_SPAWN_EGG) return 50000000;
             if (this.getItem() == Items.CAMPFIRE) return 25000000;
             if (this.getItem() == Items.SOUL_CAMPFIRE) return 25000000;
+            if (this.getItem() == Items.MAGMA_CUBE_SPAWN_EGG) return 50000000;
+            if (this.getItem() == Items.PANDA_SPAWN_EGG) return 50000000;
         }
 
         return maxSellPrice;
