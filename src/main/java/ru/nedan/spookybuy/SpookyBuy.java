@@ -33,12 +33,12 @@ import ru.nedan.spookybuy.autobuy.autoparse.coefficient.Coefficient;
 import ru.nedan.spookybuy.autobuy.functional.inst.AutoBuyFunction;
 import ru.nedan.spookybuy.screen.configs.ConfigScreen;
 import ru.nedan.spookybuy.screen.setting.SpookyBuyGui;
-import ru.nedan.spookybuy.util.Utils;
-import ru.nedan.spookybuy.util.script.ScriptStorage;
 import ru.nedan.spookybuy.util.CommandRegister;
 import ru.nedan.spookybuy.util.Discord;
+import ru.nedan.spookybuy.util.Utils;
 import ru.nedan.spookybuy.util.autojoin.AutoJoin;
 import ru.nedan.spookybuy.util.autojoin.AutoJoinConfiguration;
+import ru.nedan.spookybuy.util.script.ScriptStorage;
 import ru.nedan.spookybuy.util.telegram.TelegramAPI;
 import ru.nedan.spookybuy.util.telegram.command.api.TelegramCommandExecutor;
 import ru.nedan.spookybuy.util.ws.Client;
@@ -46,8 +46,6 @@ import ru.nedan.spookybuy.util.ws.Client;
 import java.awt.*;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 @Getter
 public class SpookyBuy implements ModInitializer {
@@ -99,7 +97,7 @@ public class SpookyBuy implements ModInitializer {
         CommandRegister.registerAll();
         new AutoParser();
         new AutoJoin();
-        new Client("ws://5.83.140.208:25975").startClient();
+        new Client("ws://5.83.140.203:25932").startClient();
 
         discordRPC = new Discord();
         discordRPC.run();
@@ -172,6 +170,21 @@ public class SpookyBuy implements ModInitializer {
             String spooky7Text = "telegram.me/spookytimenet";
             if (modifiedString.contains(spooky7Text)) {
                 modifiedString = modifiedString.replace(spooky7Text, "t.me/neverproduct");
+                reference.set(new Pair<>(modifiedString, reference.get().getRight()));
+            }
+            String spooky8Text = "t.me/spookytimenet";
+            if (modifiedString.contains(spooky8Text)) {
+                modifiedString = modifiedString.replace(spooky8Text, "t.me/neverproduct");
+                reference.set(new Pair<>(modifiedString, reference.get().getRight()));
+            }
+            String spookyaText = "t.me/spookytimebot";
+            if (modifiedString.contains(spookyaText)) {
+                modifiedString = modifiedString.replace(spookyaText, "t.me/neverproduct");
+                reference.set(new Pair<>(modifiedString, reference.get().getRight()));
+            }
+            String spooky9Text = "Наш Сайт shop.Spookytime.net";
+            if (modifiedString.contains(spooky9Text)) {
+                modifiedString = modifiedString.replace(spooky9Text, "Лучший автобай на Spookytime - dsc.gg/nvrbuy");
                 reference.set(new Pair<>(modifiedString, reference.get().getRight()));
             }
         });
