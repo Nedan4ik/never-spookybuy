@@ -2,6 +2,7 @@ package ru.nedan.spookybuy;
 
 import lombok.Getter;
 import lombok.Setter;
+import net.minecraft.client.MinecraftClient;
 import ru.nedan.spookybuy.util.ws.Client;
 
 import java.awt.*;
@@ -48,11 +49,9 @@ public class Authentication {
 
     private static void copyToClipboard(String text) {
         try {
-            StringSelection stringSelection = new StringSelection(text);
-            Toolkit.getDefaultToolkit().getSystemClipboard().setContents(stringSelection, null);
-            System.out.println("HWID: " + text);
+            MinecraftClient.getInstance().keyboard.setClipboard(text);
         } catch (Exception e) {
-            // лютый игнор...
+            // пусто
         }
     }
 }
